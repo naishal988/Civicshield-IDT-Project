@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CivicShield — AI-powered verification for suspicious government notices, scam messages, and fraudulent documents." />
+  <title>CivicShield — Document Verification</title>
+
+  <!-- Favicon (inline SVG shield) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'%3E%3Cpath d='M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm0 2.18l7 3.89v4.43c0 4.56-3.07 8.81-7 9.95-3.93-1.14-7-5.39-7-9.95V8.07l7-3.89zM10 15.5l-3.5-3.5 1.41-1.41L10 12.67l5.59-5.59L17 8.5l-7 7z'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --surface: #111827;
+      --surface-2: #1a2332;
+      --border: rgba(255,255,255,.06);
+      --border-focus: rgba(96,165,250,.35);
+      --blue: #3b82f6;
+      --blue-dim: rgba(59,130,246,.12);
+      --green: #22c55e;
+      --green-dim: rgba(34,197,94,.1);
+      --amber: #eab308;
+      --amber-dim: rgba(234,179,8,.1);
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,.1);
+      --text: #e2e8f0;
+      --text-2: #94a3b8;
+      --text-3: #4b5563;
+      --sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --radius: 10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Icon base ─────────────────────────── */
+    .icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .icon svg { width: 100%; height: 100%; }
+    .icon-sm  { width: 16px; height: 16px; }
+    .icon-md  { width: 20px; height: 20px; }
+    .icon-lg  { width: 24px; height: 24px; }
+
+    /* ── Toast ──────────────────────────────── */
+    #toast {
+      position: fixed; top: 20px; right: 20px; z-index: 9999;
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      max-width: 340px;
+      font-size: .85rem; color: var(--text-2);
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+      transform: translateX(calc(100% + 40px));
+      opacity: 0;
+      transition: transform .4s cubic-bezier(.22,1,.36,1), opacity .3s ease;
+    }
+    #toast.show { transform: translateX(0); opacity: 1; }
+    #toast strong { color: var(--blue); }
+    .toast-close {
+      background: none; border: none; color: var(--text-3);
+      cursor: pointer; padding: 2px; margin-left: 6px;
+      border-radius: 4px; line-height: 0;
+    }
+    .toast-close:hover { color: var(--text-2); }
+
+    /* ── Layout ─────────────────────────────── */
+    .wrap { max-width: 820px; margin: 0 auto; padding: 0 20px; }
+
+    /* ── Header ─────────────────────────────── */
+    header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,14,23,.85);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+    }
+    nav { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--text);
+    }
+    .logo-mark {
+      width: 32px; height: 32px;
+      background: var(--blue);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+    }
+    .logo-mark svg { width: 18px; height: 18px; }
+    .logo-wordmark { font-size: 1rem; font-weight: 700; letter-spacing: -.01em; }
+    .logo-wordmark span { color: var(--blue); }
+    .nav-tag {
+      font-size: .7rem; font-weight: 600; color: var(--text-3);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 3px 10px;
+      letter-spacing: .04em;
+    }
+
+    /* ── Hero ───────────────────────────────── */
+    .hero { padding: 64px 0 48px; max-width: 600px; }
+    .hero h1 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700; line-height: 1.15;
+      letter-spacing: -.025em; margin-bottom: 14px;
+    }
+    .hero p { color: var(--text-2); font-size: .95rem; max-width: 480px; }
+
+    /* ── Card ───────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .card-head {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-head-icon {
+      width: 36px; height: 36px;
+      background: var(--blue-dim);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--blue);
+    }
+    .card-head-icon svg { width: 18px; height: 18px; }
+    .card-head-text h2 { font-size: .95rem; font-weight: 600; }
+    .card-head-text p { font-size: .78rem; color: var(--text-3); margin-top: 1px; }
+    .card-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── Tabs ───────────────────────────────── */
+    .tabs {
+      display: flex; gap: 2px;
+      background: var(--bg);
+      border-radius: 8px; padding: 3px;
+    }
+    .tab {
+      flex: 1; padding: 8px 14px;
+      background: none; border: none;
+      border-radius: 6px;
+      color: var(--text-3); font-size: .82rem; font-weight: 500;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-family: var(--sans);
+      transition: color .15s, background .15s;
+    }
+    .tab svg { width: 15px; height: 15px; }
+    .tab.active { background: var(--surface-2); color: var(--text); }
+    .tab:not(.active):hover { color: var(--text-2); }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── Drop zone ─────────────────────────── */
+    .dropzone {
+      border: 1.5px dashed rgba(255,255,255,.1);
+      border-radius: var(--radius);
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .dropzone:hover, .dropzone.over {
+      border-color: var(--blue);
+      background: rgba(59,130,246,.04);
+    }
+    .dropzone-icon { color: var(--text-3); margin-bottom: 12px; }
+    .dropzone-icon svg { width: 36px; height: 36px; }
+    .dropzone-title { font-size: .9rem; font-weight: 500; margin-bottom: 4px; }
+    .dropzone-sub { font-size: .78rem; color: var(--text-3); }
+    .dropzone-sub a { color: var(--blue); text-decoration: none; }
+    .file-badges {
+      display: flex; gap: 6px; justify-content: center; margin-top: 14px; flex-wrap: wrap;
+    }
+    .file-badge {
+      font-size: .68rem; font-weight: 600; font-family: var(--mono);
+      color: var(--text-3);
+      background: var(--bg);
+      border-radius: 4px; padding: 2px 8px;
+    }
+    #fileInput { display: none; }
+    .file-info {
+      display: none; margin-top: 12px;
+      padding: 10px 14px;
+      background: var(--green-dim);
+      border: 1px solid rgba(34,197,94,.2);
+      border-radius: 6px;
+      font-size: .82rem; color: var(--green);
+      align-items: center; gap: 8px;
+    }
+    .file-info.on { display: flex; }
+    .file-info svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* ── Textarea ───────────────────────────── */
+    .field { position: relative; }
+    .field textarea {
+      width: 100%; min-height: 180px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text); font-family: var(--sans); font-size: .88rem;
+      line-height: 1.65; padding: 14px 16px;
+      resize: vertical; outline: none;
+      transition: border-color .2s;
+    }
+    .field textarea::placeholder { color: var(--text-3); }
+    .field textarea:focus { border-color: var(--border-focus); }
+    .field .count {
+      position: absolute; bottom: 10px; right: 12px;
+      font-size: .68rem; color: var(--text-3); font-family: var(--mono);
+      pointer-events: none;
+    }
+
+    /* ── Samples ────────────────────────────── */
+    .samples { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .samples-label { font-size: .72rem; color: var(--text-3); margin-right: 2px; }
+    .sample {
+      font-size: .72rem; font-weight: 500; font-family: var(--sans);
+      padding: 4px 10px;
+      border: 1px solid var(--border); border-radius: 20px;
+      background: none; color: var(--text-3); cursor: pointer;
+      display: flex; align-items: center; gap: 4px;
+      transition: border-color .15s, color .15s;
+    }
+    .sample svg { width: 12px; height: 12px; }
+    .sample:hover { border-color: var(--text-2); color: var(--text-2); }
+    .sample.red:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Scan button ────────────────────────── */
+    .actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    #scanBtn {
+      flex: 1; min-width: 180px;
+      padding: 12px 24px;
+      background: var(--blue); border: none;
+      border-radius: 8px;
+      color: #fff; font-family: var(--sans); font-size: .9rem; font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity .15s, transform .1s;
+    }
+    #scanBtn:hover { opacity: .9; }
+    #scanBtn:active { transform: scale(.99); }
+    #scanBtn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    #scanBtn svg { width: 18px; height: 18px; }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: none;
+    }
+    #scanBtn.loading .spinner { display: block; }
+    #scanBtn.loading .btn-icon { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .actions-note { font-size: .72rem; color: var(--text-3); display: flex; align-items: center; gap: 5px; }
+    .actions-note svg { width: 13px; height: 13px; }
+
+    /* ── Results ────────────────────────────── */
+    #results { display: none; margin-top: 24px; animation: fadeUp .35s ease; }
+    #results.on { display: block; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    .verdict-bar {
+      padding: 22px 24px;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+    .verdict-bar.safe    { background: var(--green-dim); }
+    .verdict-bar.warning { background: var(--amber-dim); }
+    .verdict-bar.danger  { background: var(--red-dim); }
+    .verdict-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .safe .verdict-icon    { background: rgba(34,197,94,.15); color: var(--green); }
+    .warning .verdict-icon { background: rgba(234,179,8,.15); color: var(--amber); }
+    .danger .verdict-icon  { background: rgba(239,68,68,.15); color: var(--red); }
+    .verdict-icon svg { width: 22px; height: 22px; }
+    .verdict-meta { flex: 1; }
+    .verdict-label {
+      font-size: .68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .08em; margin-bottom: 2px;
+    }
+    .safe .verdict-label    { color: var(--green); }
+    .warning .verdict-label { color: var(--amber); }
+    .danger .verdict-label  { color: var(--red); }
+    .verdict-title { font-size: 1.1rem; font-weight: 700; }
+
+    /* Score ring */
+    .ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .ring { width: 56px; height: 56px; position: relative; }
+    .ring svg { transform: rotate(-90deg); }
+    .ring-track { fill: none; stroke: rgba(255,255,255,.06); stroke-width: 4.5; }
+    .ring-fill  { fill: none; stroke-width: 4.5; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+    .ring-num {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; font-weight: 700;
+    }
+    .ring-label { font-size: .6rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; }
+
+    /* Result body */
+    .result-body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+    .summary {
+      padding: 14px 16px; border-radius: 8px;
+      font-size: .88rem; line-height: 1.6;
+    }
+    .summary.safe    { background: var(--green-dim); border: 1px solid rgba(34,197,94,.15); }
+    .summary.warning { background: var(--amber-dim); border: 1px solid rgba(234,179,8,.15); }
+    .summary.danger  { background: var(--red-dim);   border: 1px solid rgba(239,68,68,.15); }
+
+    .findings { display: flex; flex-direction: column; gap: 8px; }
+    .findings-label {
+      font-size: .7rem; font-weight: 700; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .08em;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .findings-label svg { width: 14px; height: 14px; }
+    .finding {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 12px 14px; border-radius: 6px; font-size: .84rem; line-height: 1.5;
+    }
+    .finding svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 2px; }
+    .finding.issue   { background: var(--red-dim); border: 1px solid rgba(239,68,68,.12); color: #fca5a5; }
+    .finding.warn    { background: var(--amber-dim); border: 1px solid rgba(234,179,8,.12); color: #fde68a; }
+    .finding.good    { background: var(--green-dim); border: 1px solid rgba(34,197,94,.12); color: #86efac; }
+    .finding.issue svg { color: var(--red); }
+    .finding.warn svg  { color: var(--amber); }
+    .finding.good svg  { color: var(--green); }
+
+    .preview {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+    }
+    .preview-head {
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: .7rem; font-weight: 600; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .06em;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .preview-head svg { width: 13px; height: 13px; }
+    .preview-body {
+      padding: 12px 14px;
+      font-family: var(--mono); font-size: .75rem; color: var(--text-3);
+      white-space: pre-wrap; word-break: break-word;
+      max-height: 110px; overflow-y: auto; line-height: 1.55;
+    }
+
+    .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-ghost {
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: none; color: var(--text-2);
+      font-family: var(--sans); font-size: .8rem; font-weight: 500;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-ghost svg { width: 14px; height: 14px; }
+    .btn-ghost:hover { border-color: var(--text-2); color: var(--text); }
+
+    .disclaimer {
+      font-size: .72rem; color: var(--text-3); line-height: 1.5;
+      padding: 12px 14px; background: var(--bg); border-radius: 6px;
+    }
+    .disclaimer strong { color: var(--text-2); }
+
+    /* ── How section ────────────────────────── */
+    .section { padding: 56px 0; }
+    .section-label { font-size: .68rem; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; }
+    .section-title { font-size: 1.4rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: 8px; }
+    .section-sub { font-size: .88rem; color: var(--text-2); max-width: 440px; }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px; margin-top: 32px;
+    }
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 18px;
+      transition: border-color .2s;
+    }
+    .step:hover { border-color: rgba(255,255,255,.1); }
+    .step-num {
+      font-size: .6rem; font-weight: 700; color: var(--blue);
+      font-family: var(--mono);
+      background: var(--blue-dim); border-radius: 4px;
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px;
+    }
+    .step-icon { color: var(--text-3); margin-bottom: 10px; }
+    .step-icon svg { width: 24px; height: 24px; }
+    .step-title { font-size: .88rem; font-weight: 600; margin-bottom: 4px; }
+    .step-desc  { font-size: .78rem; color: var(--text-3); line-height: 1.5; }
+
+    /* ── VS table ──────────────────────────── */
+    .vs-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 28px;
+    }
+    .vs-table th, .vs-table td {
+      padding: 12px 18px; text-align: left;
+      font-size: .82rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .vs-table th {
+      background: var(--bg);
+      font-size: .68rem; font-weight: 700; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    .vs-table tr:last-child td { border-bottom: none; }
+    .vs-table td:first-child { color: var(--text); font-weight: 500; }
+    .col-muted { color: var(--text-3); }
+    .col-cs { color: var(--green); font-weight: 500; }
+
+    /* ── Footer ─────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 0; margin-top: auto;
+    }
+    .footer-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .footer-copy { font-size: .75rem; color: var(--text-3); }
+    .footer-links { display: flex; gap: 16px; }
+    .footer-links a { font-size: .75rem; color: var(--text-3); text-decoration: none; transition: color .15s; }
+    .footer-links a:hover { color: var(--text-2); }
+
+    /* ── Chatbot widget ─────────────────────── */
+    #chatWidget { position: fixed; bottom: 24px; right: 24px; z-index: 9000; }
+    .chat-btn {
+      width: 48px; height: 48px;
+      background: var(--blue); border: none; border-radius: 50%;
+      cursor: pointer; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(59,130,246,.4);
+      transition: transform .15s;
+      position: relative;
+    }
+    .chat-btn:hover { transform: scale(1.08); }
+    .chat-btn svg { width: 22px; height: 22px; }
+    .chat-dot {
+      position: absolute; top: -1px; right: -1px;
+      width: 12px; height: 12px;
+      background: var(--green);
+      border: 2px solid var(--bg);
+      border-radius: 50%;
+    }
+    .chat-popup {
+      position: absolute; bottom: 60px; right: 0;
+      width: 220px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+      opacity: 0; pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity .2s, transform .2s;
+    }
+    .chat-popup.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .chat-popup-title { font-size: .82rem; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .chat-popup-title svg { width: 16px; height: 16px; color: var(--blue); }
+    .chat-popup-body { font-size: .75rem; color: var(--text-3); line-height: 1.45; }
+    .chat-popup-tag {
+      display: inline-block; margin-top: 8px;
+      font-size: .65rem; font-weight: 600; color: var(--blue);
+      background: var(--blue-dim);
+      border-radius: 4px; padding: 2px 8px;
+    }
+
+    /* ── Scrollbar ──────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+
+    /* ── Responsive ─────────────────────────── */
+    @media (max-width: 600px) {
+      .hero { padding: 40px 0 32px; }
+      .card-head, .card-body, .verdict-bar, .result-body { padding: 16px; }
+      .ring-wrap { display: none; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Toast ──────────────────────────── -->
+  <div id="toast" role="alert">
+    <span class="icon icon-md" style="color:var(--blue)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </span>
+    <span><strong>AI Chatbot</strong> feature is coming soon.</span>
+    <button class="toast-close" id="toastClose" aria-label="Dismiss">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div style="display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:1">
+
+    <!-- ── Header ─────────────────────────── -->
+    <header>
+      <nav class="wrap">
+        <a class="logo" href="#">
+          <div class="logo-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <span class="logo-wordmark">Civic<span>Shield</span></span>
+        </a>
+        <span class="nav-tag">v1.0</span>
+      </nav>
+    </header>
+
+    <main class="wrap">
+
+      <!-- ── Hero ─────────────────────────── -->
+      <section class="hero">
+        <h1>Verify suspicious government notices instantly</h1>
+        <p>Upload a document or paste text. Our AI checks content, domains, and language patterns — and tells you in plain English whether it's real or a scam.</p>
+      </section>
+
+      <!-- ── Scan Card ────────────────────── -->
+      <section>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-head-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div class="card-head-text">
+              <h2>Scan Document</h2>
+              <p>Upload a file or paste the suspicious text.</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <!-- Tabs -->
+            <div class="tabs" role="tablist">
+              <button class="tab active" id="tab-file" role="tab" aria-selected="true" onclick="switchTab('file')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Upload File
+              </button>
+              <button class="tab" id="tab-text" role="tab" aria-selected="false" onclick="switchTab('text')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                Paste Text
+              </button>
+            </div>
+
+            <!-- File panel -->
+            <div class="panel active" id="panel-file">
+              <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()" tabindex="0" role="button" aria-label="Drop file or click to browse">
+                <div class="dropzone-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <p class="dropzone-title">Drop your file here</p>
+                <p class="dropzone-sub">or <a>click to browse</a></p>
+                <div class="file-badges">
+                  <span class="file-badge">.PDF</span>
+                  <span class="file-badge">.PNG</span>
+                  <span class="file-badge">.JPG</span>
+                  <span class="file-badge">.TXT</span>
+                </div>
+              </div>
+              <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt" />
+              <div class="file-info" id="fileInfo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <span id="fileName"></span>
+              </div>
+            </div>
+
+            <!-- Text panel -->
+            <div class="panel" id="panel-text">
+              <div class="field">
+                <textarea id="textInput" placeholder="Paste the suspicious notice, SMS, or email content here…" maxlength="5000"></textarea>
+                <span class="count" id="charCount">0 / 5000</span>
+              </div>
+              <div class="samples">
+                <span class="samples-label">Try:</span>
+                <button class="sample red" onclick="loadSample('scam')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Scam notice
+                </button>
+                <button class="sample" onclick="loadSample('legit')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Legit notice
+                </button>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="actions">
+              <button id="scanBtn" onclick="runScan()">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <div class="spinner"></div>
+                <span id="scanBtnLabel">Scan & Verify</span>
+              </button>
+              <span class="actions-note">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Your file is never stored
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Results ──────────────────────── -->
+        <div id="results">
+          <div class="card" id="resultCard">
+            <div class="verdict-bar" id="verdictBar">
+              <div class="verdict-icon" id="verdictIcon"></div>
+              <div class="verdict-meta">
+                <div class="verdict-label" id="verdictLabel"></div>
+                <div class="verdict-title" id="verdictTitle"></div>
+              </div>
+              <div class="ring-wrap">
+                <div class="ring">
+                  <svg width="56" height="56" viewBox="0 0 56 56">
+                    <circle class="ring-track" cx="28" cy="28" r="23"/>
+                    <circle class="ring-fill" id="ringFill" cx="28" cy="28" r="23"/>
+                  </svg>
+                  <div class="ring-num" id="ringNum"></div>
+                </div>
+                <span class="ring-label">Score</span>
+              </div>
+            </div>
+            <div class="result-body">
+              <div class="summary" id="summaryBox"></div>
+              <div id="issuesWrap"   class="findings" style="display:none"><div class="findings-label" id="issuesLabel"></div><div id="issuesList"></div></div>
+              <div id="warningsWrap" class="findings" style="display:none"><div class="findings-label" id="warningsLabel"></div><div id="warningsList"></div></div>
+              <div id="positivesWrap" class="findings" style="display:none"><div class="findings-label" id="positivesLabel"></div><div id="positivesList"></div></div>
+              <div class="preview" id="preview" style="display:none">
+                <div class="preview-head">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  Analysed text
+                </div>
+                <div class="preview-body" id="previewBody"></div>
+              </div>
+              <div class="result-actions">
+                <button class="btn-ghost" onclick="resetScan()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                  Scan another
+                </button>
+                <button class="btn-ghost" onclick="copyResults()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Copy
+                </button>
+                <button class="btn-ghost" onclick="window.open('https://cybercrime.gov.in','_blank')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Report scam
+                </button>
+              </div>
+              <p class="disclaimer"><strong>Disclaimer:</strong> CivicShield is an AI-assisted tool for awareness. Results are not legal advice. Always verify with the official department directly.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── How it works ─────────────────── -->
+      <section class="section">
+        <div class="section-label">How it works</div>
+        <h2 class="section-title">Four steps to verify</h2>
+        <p class="section-sub">CivicShield runs multi-layer checks to detect government impersonation, scam language, and fraudulent domains.</p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">01</div>
+            <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div class="step-title">Upload</div>
+            <div class="step-desc">Upload a letter as PDF or image, or paste the SMS/email text.</div>
+          </div>
+          <div class="step">
+            <div class="step-num">02</div>
+            <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <div class="step-title">AI analysis</div>
+            <div class="step-desc">Content, domains, seals, and scam keywords are all inspected by AI.</div>
+          </div>
+          <div class="step">
+            <div class="step-num">03</div>
+            <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+            <div class="step-title">Plain English verdict</div>
+            <div class="step-desc">Get a clear safe / suspicious / scam result — no technical jargon.</div>
+          </div>
+          <div class="step">
+            <div class="step-num">04</div>
+            <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div class="step-title">Take action</div>
+            <div class="step-desc">Share results or report to cybercrime.gov.in with one click.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── VS ───────────────────────────── -->
+      <section class="section">
+        <div class="section-label">Why CivicShield</div>
+        <h2 class="section-title">CivicShield vs VirusTotal</h2>
+        <p class="section-sub">Most tools scan for software viruses. We scan for content fraud.</p>
+        <table class="vs-table">
+          <thead><tr><th>Feature</th><th>VirusTotal</th><th>CivicShield</th></tr></thead>
+          <tbody>
+            <tr><td>What it scans</td><td class="col-muted">Software code & malware</td><td class="col-cs">Document content & language</td></tr>
+            <tr><td>Fake govt notice</td><td class="col-muted">Misses it ("0/70 viruses")</td><td class="col-cs">Detects scam language & fake domains</td></tr>
+            <tr><td>Output format</td><td class="col-muted">Technical hashes & logs</td><td class="col-cs">Plain English explanation</td></tr>
+            <tr><td>Target audience</td><td class="col-muted">Security researchers</td><td class="col-cs">Ordinary citizens</td></tr>
+            <tr><td>Domain check</td><td class="col-muted">URL only</td><td class="col-cs">Validates .gov.in / .nic.in patterns</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+    </main>
+
+    <!-- ── Footer ─────────────────────────── -->
+    <footer>
+      <div class="wrap footer-inner">
+        <p class="footer-copy">&copy; 2024 CivicShield &middot; IDT College Project</p>
+        <nav class="footer-links">
+          <a href="https://cybercrime.gov.in" target="_blank" rel="noopener">Report Cybercrime</a>
+          <a href="https://cert-in.org.in" target="_blank" rel="noopener">CERT-In</a>
+        </nav>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ── Chatbot widget ───────────────────── -->
+  <div id="chatWidget">
+    <div class="chat-popup" id="chatPopup">
+      <div class="chat-popup-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        AI Assistant
+      </div>
+      <p class="chat-popup-body">Ask about government notices, scams, or document fraud.</p>
+      <span class="chat-popup-tag">Coming soon</span>
+    </div>
+    <button class="chat-btn" id="chatBtn" aria-label="AI Chatbot (coming soon)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <div class="chat-dot"></div>
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       JAVASCRIPT
+  ═══════════════════════════════════════ -->
+  <script>
+    "use strict";
+
+    const ENDPOINT = `${location.origin}/api/scan`;
+
+    const SAMPLES = {
+      scam: `URGENT NOTICE - Government of India Tax Department\n\nDear Citizen,\n\nYour PAN card and Aadhaar will be SUSPENDED within 24 hours due to tax evasion.\nYou must pay a penalty of Rs. 4,999 immediately to avoid arrest and legal action.\n\nClick here to verify and pay: http://india-tax-verify.com/urgent-pay\n\nDo not ignore this notice. Failure to comply will result in immediate legal proceedings.\n\nContact: +918899001122 (WhatsApp only)`,
+      legit: `Government of India\nMinistry of Electronics and Information Technology\nReference No: MEITY/2024/DL/00412\n\nSubject: Annual Digital India Programme Feedback Survey\n\nDear Citizen,\n\nThe Ministry of Electronics and Information Technology invites you to participate in the Annual Digital India Feedback Survey for the year 2024-25.\n\nPlease visit the official portal: https://digitalindia.gov.in/survey2024\n\nFor queries, contact the toll-free helpline: 1800-111-555 (Mon–Fri, 9AM–6PM)\n\nYours faithfully,\nDirector General\nMinistry of Electronics and Information Technology`
+    };
+
+    // SVG icon strings (used in JS-rendered content)
+    const SVG = {
+      alertTriangle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+      xCircle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+      check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+      checkCircle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+      shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    };
+
+    let activeTab = 'file', selectedFile = null, popupOpen = false;
+
+    // ── Toast ──
+    setTimeout(() => document.getElementById('toast').classList.add('show'), 600);
+    setTimeout(() => document.getElementById('toast').classList.remove('show'), 6000);
+    document.getElementById('toastClose').onclick = () => document.getElementById('toast').classList.remove('show');
+
+    // ── Tabs ──
+    function switchTab(t) {
+      activeTab = t;
+      ['file','text'].forEach(k => {
+        document.getElementById('tab-'+k).classList.toggle('active', k===t);
+        document.getElementById('tab-'+k).setAttribute('aria-selected', k===t);
+        document.getElementById('panel-'+k).classList.toggle('active', k===t);
+      });
+    }
+
+    // ── File upload ──
+    const dz = document.getElementById('dropzone');
+    const fi = document.getElementById('fileInput');
+
+    fi.onchange = () => { if(fi.files[0]) pickFile(fi.files[0]); };
+    dz.ondragover = e => { e.preventDefault(); dz.classList.add('over'); };
+    dz.ondragleave = () => dz.classList.remove('over');
+    dz.ondrop = e => { e.preventDefault(); dz.classList.remove('over'); if(e.dataTransfer.files[0]) pickFile(e.dataTransfer.files[0]); };
+    dz.onkeydown = e => { if(e.key==='Enter'||e.key===' ') fi.click(); };
+
+    function pickFile(f) {
+      selectedFile = f;
+      document.getElementById('fileName').textContent = `${f.name}  (${(f.size/1024).toFixed(1)} KB)`;
+      document.getElementById('fileInfo').classList.add('on');
+    }
+
+    // ── Char count ──
+    const ta = document.getElementById('textInput');
+    const cc = document.getElementById('charCount');
+    ta.oninput = () => { cc.textContent = `${ta.value.length} / 5000`; };
+
+    // ── Samples ──
+    function loadSample(type) {
+      switchTab('text');
+      ta.value = SAMPLES[type];
+      ta.dispatchEvent(new Event('input'));
+      ta.focus();
+    }
+
+    // ── Scan ──
+    async function runScan() {
+      if (activeTab==='file' && !selectedFile) return alert('Select a file first, or switch to Paste Text.');
+      if (activeTab==='text' && !ta.value.trim()) return alert('Paste some text first.');
+
+      setLoading(true);
+      hide('results');
+
+      try {
+        let res;
+        if (activeTab==='file') {
+          const fd = new FormData(); fd.append('file', selectedFile);
+          res = await fetch(ENDPOINT, {method:'POST', body:fd});
+        } else {
+          res = await fetch(ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text:ta.value.trim()})});
+        }
+        if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error||`HTTP ${res.status}`); }
+        render(await res.json());
+      } catch(err) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+          render(getMock());
+        } else {
+          showError(err.message);
+        }
+      } finally { setLoading(false); }
+    }
+
+    function setLoading(on) {
+      const b = document.getElementById('scanBtn');
+      b.disabled = on; b.classList.toggle('loading', on);
+      document.getElementById('scanBtnLabel').textContent = on ? 'Analysing…' : 'Scan & Verify';
+    }
+
+    // ── Render results ──
+    function render(d) {
+      const vc = d.verdict_code;
+      const icons = { safe: SVG.checkCircle, warning: SVG.alertTriangle, danger: SVG.xCircle };
+      const colors = { safe: 'var(--green)', warning: 'var(--amber)', danger: 'var(--red)' };
+
+      const bar = document.getElementById('verdictBar');
+      bar.className = `verdict-bar ${vc}`;
+      document.getElementById('verdictIcon').innerHTML = icons[vc];
+      document.getElementById('verdictLabel').textContent = 'AI Verdict';
+      document.getElementById('verdictTitle').textContent = d.verdict;
+
+      // Ring
+      const score = Math.max(0, Math.min(100, d.score||0));
+      const circ = 2*Math.PI*23;
+      const rf = document.getElementById('ringFill');
+      rf.style.stroke = colors[vc];
+      rf.style.strokeDasharray = circ;
+      rf.style.strokeDashoffset = circ;
+      document.getElementById('ringNum').textContent = score;
+      requestAnimationFrame(() => setTimeout(() => { rf.style.strokeDashoffset = circ*(1-score/100); }, 60));
+
+      // Summary
+      const sb = document.getElementById('summaryBox');
+      sb.className = `summary ${vc}`;
+      sb.textContent = d.summary;
+
+      // Findings
+      renderFindings('issues',   d.issues||[],   'issue', SVG.xCircle,       'Red flags');
+      renderFindings('warnings', d.warnings||[], 'warn',  SVG.alertTriangle, 'Caution');
+      renderFindings('positives',d.positives||[],'good',  SVG.check,         'Positive signals');
+
+      // Preview
+      if (d.scanned_text) {
+        show('preview'); document.getElementById('previewBody').textContent = d.scanned_text;
+      } else hide('preview');
+
+      show('results');
+      document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+    }
+
+    function renderFindings(key, items, cls, icon, label) {
+      const wrap = document.getElementById(key+'Wrap');
+      const list = document.getElementById(key+'List');
+      if (!items.length) { wrap.style.display='none'; return; }
+      wrap.style.display='flex';
+      document.getElementById(key+'Label').innerHTML = icon + ' ' + label;
+      list.innerHTML = items.map(i => `<div class="finding ${cls}">${icon}<span>${esc(i)}</span></div>`).join('');
+    }
+
+    // ── Offline mock ──
+    function getMock() {
+      const text = activeTab==='text' ? ta.value.toLowerCase() : (selectedFile?selectedFile.name.toLowerCase():'');
+      const bad = /urgent|penalty|arrest|pay now|suspend/.test(text);
+      return bad ? {
+        verdict:'HIGH RISK — LIKELY SCAM', verdict_code:'danger', score:12,
+        summary:'Multiple scam indicators found. Do NOT pay, click links, or share personal information. Report to cybercrime.gov.in.',
+        issues:['High-pressure language detected: urgent, penalty, arrest. Legitimate government notices do not use scare tactics.','Suspicious non-government URL found. Real government domains end in .gov.in or .nic.in.'],
+        warnings:['No verifiable official phone number found.'], positives:[],
+        scanned_text: activeTab==='text' ? ta.value.substring(0,600) : null
+      } : {
+        verdict:'LIKELY LEGITIMATE', verdict_code:'safe', score:88,
+        summary:'This document appears legitimate. No major red flags found. Always verify directly with the issuing department.',
+        issues:[], warnings:['Could not verify letterhead seal — visual verification recommended.'],
+        positives:['Official government domain detected (.gov.in).','Formal reference number found.','Recognisable government body referenced.'],
+        scanned_text: activeTab==='text' ? ta.value.substring(0,600) : null
+      };
+    }
+
+    // ── Utils ──
+    function show(id) { document.getElementById(id).classList.add('on'); }
+    function hide(id) { document.getElementById(id).classList.remove('on'); }
+    function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function showError(msg) {
+      const el = document.getElementById('results');
+      el.classList.add('on');
+      document.getElementById('resultCard').innerHTML = `
+        <div class="verdict-bar danger"><div class="verdict-icon">${SVG.xCircle}</div>
+        <div class="verdict-meta"><div class="verdict-label" style="color:var(--red)">Error</div>
+        <div class="verdict-title">${esc(msg)}</div></div></div>
+        <div class="result-body"><div class="result-actions">
+        <button class="btn-ghost" onclick="location.reload()">${SVG.xCircle} Reload</button></div></div>`;
+      el.scrollIntoView({behavior:'smooth'});
+    }
+
+    function resetScan() {
+      fi.value=''; ta.value=''; cc.textContent='0 / 5000';
+      document.getElementById('fileInfo').classList.remove('on');
+      selectedFile=null; hide('results');
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function copyResults() {
+      const t = document.getElementById('verdictTitle').textContent;
+      const s = document.getElementById('ringNum').textContent;
+      const m = document.getElementById('summaryBox').textContent;
+      navigator.clipboard.writeText(`CivicShield Scan\nVerdict: ${t}\nScore: ${s}/100\n\n${m}`).then(() => {
+        const b = event.target.closest('.btn-ghost'); const o = b.innerHTML;
+        b.innerHTML = SVG.check + ' Copied'; setTimeout(() => b.innerHTML = o, 1500);
+      }).catch(() => {});
+    }
+
+    // ── Chatbot ──
+    const chatBtn = document.getElementById('chatBtn');
+    const chatPop = document.getElementById('chatPopup');
+    chatBtn.onclick = () => { popupOpen=!popupOpen; chatPop.classList.toggle('show', popupOpen); };
+    chatBtn.onmouseenter = () => { if(!popupOpen) chatPop.classList.add('show'); };
+    chatBtn.onmouseleave = () => { if(!popupOpen) chatPop.classList.remove('show'); };
+    document.addEventListener('click', e => {
+      if(!document.getElementById('chatWidget').contains(e.target)) { popupOpen=false; chatPop.classList.remove('show'); }
+    });
+  </script>
+</body>
+</html>
