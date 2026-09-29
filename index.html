@@ -94,11 +94,15 @@
     button,
     input,
     textarea {
-      font: inherit
+      font: inherit;
+      color: inherit
     }
 
+    /* Added color:inherit to prevent black text */
     button {
-      border: 0
+      border: 0;
+      background: none;
+      cursor: pointer;
     }
 
     ::selection {
@@ -109,27 +113,6 @@
     .container {
       width: min(1120px, calc(100% - 40px));
       margin-inline: auto
-    }
-
-    .page {
-      display: none
-    }
-
-    .page.active {
-      display: block;
-      animation: pageIn .5s var(--ease)
-    }
-
-    @keyframes pageIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px)
-      }
-
-      to {
-        opacity: 1;
-        transform: none
-      }
     }
 
     .topbar {
@@ -147,14 +130,14 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 20px
+      gap: 20px;
     }
 
     .brand {
       display: inline-flex;
       align-items: center;
       gap: 11px;
-      text-decoration: none
+      text-decoration: none;
     }
 
     .brand-mark {
@@ -201,44 +184,6 @@
       gap: 9px
     }
 
-    .nav-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      min-height: 38px;
-      padding: 0 14px;
-      border-radius: 12px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: -.01em;
-      text-decoration: none;
-      border: 1px solid transparent;
-      transition: .25s var(--ease);
-      cursor: pointer;
-      background: transparent;
-    }
-
-    .nav-link svg {
-      width: 14px;
-      height: 14px;
-      opacity: .85
-    }
-
-    .nav-link:hover {
-      color: #fff;
-      border-color: var(--line);
-      background: rgba(255, 255, 255, .045);
-      transform: translateY(-1px);
-    }
-
-    .nav-link.active {
-      color: #fff;
-      border-color: rgba(139, 124, 255, .35);
-      background: rgba(139, 124, 255, .10);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
-    }
-
     .nav-chip,
     .icon-btn {
       min-height: 38px;
@@ -277,6 +222,10 @@
       border-color: var(--line-strong);
       background: rgba(255, 255, 255, .05);
       transform: translateY(-1px)
+    }
+
+    .icon-btn:active {
+      transform: translateY(1px) scale(.97)
     }
 
     main {
@@ -343,7 +292,7 @@
       margin: 22px auto 0;
       color: var(--muted);
       font-size: 16px;
-      line-height: 1.7
+      line-height: 1.7;
     }
 
     .hero-meta {
@@ -373,7 +322,7 @@
 
     .workspace {
       position: relative;
-      padding-bottom: 70px
+      padding-bottom: 70px;
     }
 
     .scanner-shell {
@@ -394,12 +343,20 @@
         linear-gradient(180deg, rgba(17, 19, 28, .94), rgba(10, 12, 18, .96));
     }
 
+    .scanner::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .055);
+    }
+
     .modebar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 14px 16px 0;
-      gap: 15px
+      gap: 15px;
     }
 
     .tabs {
@@ -485,6 +442,7 @@
       overflow: hidden;
       cursor: pointer;
       transition: .3s var(--ease);
+      isolation: isolate;
     }
 
     .dropzone::before {
@@ -493,7 +451,7 @@
       inset: 20px;
       border-radius: 14px;
       border: 1px solid rgba(255, 255, 255, .035);
-      pointer-events: none
+      pointer-events: none;
     }
 
     .dropzone::after {
@@ -562,52 +520,34 @@
     }
 
     .drop-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 22px;
-      padding: 11px 14px 11px 18px;
+      margin-top: 20px;
+      height: 42px;
+      padding: 0 16px;
       border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, .14);
+      border: 1px solid rgba(255, 255, 255, .13);
       background: rgba(255, 255, 255, .045);
       color: #fff;
       font-weight: 600;
-      font-size: 13px;
-      letter-spacing: -.005em;
+      font-size: 12px;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
-      transition: .2s var(--ease);
-      cursor: pointer;
-    }
-
-    .drop-cta:hover {
-      background: rgba(139, 124, 255, .14);
-      border-color: rgba(139, 124, 255, .35);
-      transform: translateY(-1px)
-    }
-
-    .drop-cta .kbd {
+      /* Add these 3 lines: */
       display: inline-flex;
       align-items: center;
-      padding: 4px 8px;
-      border-radius: 7px;
-      background: rgba(255, 255, 255, .06);
-      border: 1px solid rgba(255, 255, 255, .09);
-      color: #aeb3c1;
-      font-family: "JetBrains Mono";
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: .02em;
-      line-height: 1;
+      justify-content: center;
     }
 
-    .drop-cta .kbd-sep {
+    .drop-cta kbd {
+      margin-left: 7px;
+      padding: 3px 6px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, .065);
       color: var(--dim);
-      font-size: 10px;
-      margin: 0 1px
+      font: 10px "JetBrains Mono";
+      border: 1px solid rgba(255, 255, 255, .06)
     }
 
     .file-types {
-      margin-top: 18px;
+      margin-top: 17px;
       display: flex;
       justify-content: center;
       gap: 7px;
@@ -819,7 +759,7 @@
       gap: 8px;
       color: var(--dim);
       font-size: 10px;
-      line-height: 1.4
+      line-height: 1.4;
     }
 
     .privacy svg {
@@ -1384,270 +1324,10 @@
       letter-spacing: .08em
     }
 
-    .about-page {
-      position: relative;
-      padding: 70px 0 120px;
-      min-height: calc(100vh - 74px - 100px);
-      overflow: hidden
-    }
-
-    .about-page::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 70%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(139, 124, 255, .5), transparent);
-      pointer-events: none;
-    }
-
-    .about-page::after {
-      content: "";
-      position: absolute;
-      top: -80px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 900px;
-      height: 600px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(139, 124, 255, .10), transparent 65%);
-      pointer-events: none;
-      filter: blur(30px);
-    }
-
-    .about-back {
-      position: relative;
-      z-index: 1;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 9px 14px;
-      border-radius: 11px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, .025);
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 600;
-      transition: .2s var(--ease);
-      margin-bottom: 44px;
-    }
-
-    .about-back:hover {
-      color: #fff;
-      border-color: var(--line-strong);
-      background: rgba(255, 255, 255, .05);
-      transform: translateX(-2px)
-    }
-
-    .about-back svg {
-      width: 14px;
-      height: 14px
-    }
-
-    .about-head {
-      position: relative;
-      text-align: center;
-      margin-bottom: 56px;
-      z-index: 1
-    }
-
-    .about-kicker {
-      color: #9d94ff;
-      font: 10px "JetBrains Mono";
-      text-transform: uppercase;
-      letter-spacing: .24em;
-      margin-bottom: 16px
-    }
-
-    .about-title {
-      margin: 0;
-      font-family: "Instrument Sans";
-      font-size: clamp(32px, 4.8vw, 54px);
-      font-weight: 700;
-      letter-spacing: -.045em;
-      line-height: 1.02;
-      background: linear-gradient(180deg, #fff 35%, #9da3b8 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      color: transparent;
-    }
-
-    .about-sub {
-      max-width: 560px;
-      margin: 16px auto 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.65
-    }
-
-    .about-lead-wrap {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      margin-bottom: 42px;
-      z-index: 1
-    }
-
-    .about-lead-card {
-      position: relative;
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 34px 68px;
-      min-width: 380px;
-      border-radius: 24px;
-      background: linear-gradient(180deg, rgba(139, 124, 255, .10), rgba(139, 124, 255, .02)), rgba(11, 13, 20, .75);
-      border: 1px solid rgba(139, 124, 255, .35);
-      box-shadow: 0 0 0 1px rgba(139, 124, 255, .06), 0 30px 80px -20px rgba(124, 108, 255, .45), inset 0 1px 0 rgba(255, 255, 255, .08);
-      overflow: hidden;
-      text-align: center;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      animation: leadPulse 4.2s ease-in-out infinite;
-    }
-
-    @keyframes leadPulse {
-
-      0%,
-      100% {
-        box-shadow: 0 0 0 1px rgba(139, 124, 255, .06), 0 30px 80px -20px rgba(124, 108, 255, .40), inset 0 1px 0 rgba(255, 255, 255, .08)
-      }
-
-      50% {
-        box-shadow: 0 0 0 1px rgba(139, 124, 255, .14), 0 34px 95px -20px rgba(124, 108, 255, .60), inset 0 1px 0 rgba(255, 255, 255, .12)
-      }
-    }
-
-    .about-lead-card::before {
-      content: "";
-      position: absolute;
-      inset: -40%;
-      background: radial-gradient(circle at 50% 25%, rgba(139, 124, 255, .28), transparent 55%);
-      pointer-events: none
-    }
-
-    .about-lead-card::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 18%;
-      right: 18%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(180, 141, 255, .95), transparent);
-    }
-
-    .lead-badge {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 11px;
-      border-radius: 99px;
-      background: rgba(139, 124, 255, .16);
-      border: 1px solid rgba(139, 124, 255, .3);
-      color: #d6ceff;
-      font: 9px "JetBrains Mono";
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-
-    .lead-badge svg {
-      width: 11px;
-      height: 11px
-    }
-
-    .lead-name {
-      position: relative;
-      font-family: "Instrument Sans";
-      font-size: clamp(28px, 3.6vw, 40px);
-      font-weight: 700;
-      letter-spacing: -.035em;
-      line-height: 1.05;
-      background: linear-gradient(135deg, #ffffff 20%, #c9b5ff 85%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      color: transparent;
-      margin-bottom: 12px;
-    }
-
-    .lead-role {
-      position: relative;
-      font: 10px "JetBrains Mono";
-      letter-spacing: .2em;
-      text-transform: uppercase;
-      color: #b09bff
-    }
-
-    .about-grid {
-      position: relative;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      z-index: 1
-    }
-
-    .about-card {
-      position: relative;
-      padding: 26px 18px;
-      border-radius: 18px;
-      border: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(255, 255, 255, .024), rgba(255, 255, 255, .008));
-      text-align: center;
-      transition: .35s var(--ease);
-      overflow: hidden;
-    }
-
-    .about-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 20%;
-      right: 20%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .14), transparent);
-      opacity: 0;
-      transition: opacity .3s;
-    }
-
-    .about-card:hover {
-      border-color: rgba(139, 124, 255, .30);
-      background: linear-gradient(180deg, rgba(139, 124, 255, .06), rgba(139, 124, 255, .015));
-      transform: translateY(-4px);
-      box-shadow: 0 18px 44px rgba(0, 0, 0, .28);
-    }
-
-    .about-card:hover::before {
-      opacity: 1
-    }
-
-    .about-card-name {
-      font-family: "Instrument Sans";
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: -.02em;
-      margin-bottom: 10px;
-      color: #fff
-    }
-
-    .about-card-role {
-      font: 9px "JetBrains Mono";
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: var(--dim);
-      line-height: 1.6
-    }
-
     .footer {
       border-top: 1px solid var(--line);
       padding: 28px 0 35px;
-      color: var(--dim)
+      color: var(--dim);
     }
 
     .footer-row {
@@ -1689,14 +1369,14 @@
       color: #fff
     }
 
+    /* --- Toast Notifications (Moved to Top Right to avoid Chatbot overlap) --- */
     .toast-container {
       position: fixed;
       right: 18px;
-      top: 88px;
+      top: 18px;
       z-index: 100;
       display: grid;
-      gap: 8px;
-      pointer-events: none
+      gap: 8px
     }
 
     .toast {
@@ -1711,10 +1391,9 @@
       background: rgba(15, 17, 25, .93);
       backdrop-filter: blur(18px);
       box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
-      transform: translateX(20px);
+      transform: translateY(-20px);
       opacity: 0;
-      animation: toastIn .35s var(--ease) forwards;
-      pointer-events: auto;
+      animation: toastIn .35s var(--ease) forwards
     }
 
     @keyframes toastIn {
@@ -1730,7 +1409,7 @@
 
     @keyframes toastOut {
       to {
-        transform: translateX(20px);
+        transform: translateY(-15px);
         opacity: 0
       }
     }
@@ -1763,6 +1442,198 @@
 
     .toast-close:hover {
       color: #fff
+    }
+
+    /* --- Chatbot --- */
+    .chatbot-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column-reverse;
+      /* Changed from 'column' so the window pops up above the button */
+      align-items: flex-end;
+    }
+
+    .chatbot-window {
+      display: none;
+      width: 360px;
+      height: 500px;
+      background: rgba(16, 18, 26, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+      margin-bottom: 16px;
+      overflow: hidden;
+      flex-direction: column;
+      /* Removed animation from here */
+    }
+
+    .chatbot-window.on {
+      display: flex;
+      animation: panelIn 0.3s var(--ease);
+      /* Added animation here so it triggers on open */
+    }
+
+    .chatbot-toggle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c6cff, #a57cff);
+      color: white;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 8px 24px rgba(124, 108, 255, .4), inset 0 1px 0 rgba(255, 255, 255, .2);
+      transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+    }
+
+    .chatbot-toggle:hover {
+      transform: scale(1.08);
+      box-shadow: 0 12px 32px rgba(124, 108, 255, .5), inset 0 1px 0 rgba(255, 255, 255, .3);
+    }
+
+    .chatbot-toggle:active {
+      transform: scale(0.95);
+    }
+
+    .chatbot-window {
+      display: none;
+      width: 360px;
+      height: 500px;
+      background: rgba(16, 18, 26, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+      margin-bottom: 16px;
+      overflow: hidden;
+      flex-direction: column;
+      animation: panelIn 0.3s var(--ease);
+    }
+
+    .chatbot-window.on {
+      display: flex;
+    }
+
+    .chatbot-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, .02);
+    }
+
+    .chatbot-header-title {
+      font-family: "Instrument Sans";
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chatbot-header-title .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(89, 214, 161, .6);
+    }
+
+    .chatbot-close {
+      color: var(--dim);
+      font-size: 20px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .chatbot-close:hover {
+      color: #fff;
+    }
+
+    .chatbot-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chatbot-messages::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .chatbot-messages::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, .1);
+      border-radius: 4px;
+    }
+
+    .chat-msg {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .chat-msg.bot {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid rgba(255, 255, 255, .08);
+      color: #e8e9ee;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-msg.user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #7c6cff, #a57cff);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 12px rgba(124, 108, 255, .2);
+    }
+
+    .chatbot-input-area {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255, 255, 255, .06);
+      display: flex;
+      gap: 8px;
+      background: rgba(0, 0, 0, .2);
+    }
+
+    .chatbot-input-area input {
+      flex: 1;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 10px;
+      padding: 0 14px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .chatbot-input-area input:focus {
+      border-color: rgba(139, 124, 255, .5);
+    }
+
+    .chatbot-input-area button {
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .chatbot-input-area button:hover {
+      background: var(--accent-2);
     }
 
     .history-drawer {
@@ -1825,9 +1696,10 @@
       gap: 4px;
       cursor: pointer;
       transition: .2s;
-      text-align: left;
       color: var(--text);
-      font-family: inherit;
+      /* FIX: Ensure text is white */
+      width: 100%;
+      text-align: left;
     }
 
     .history-item:hover {
@@ -1848,12 +1720,12 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: #fff
+      color: var(--text);
     }
 
+    /* FIX: Ensure text is white */
     .history-score {
-      font: 10px "JetBrains Mono";
-      font-weight: 600
+      font: 10px "JetBrains Mono"
     }
 
     .history-date {
@@ -1887,371 +1759,6 @@
       display: none !important
     }
 
-    .chat-widget {
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      z-index: 110;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 12px
-    }
-
-    .chat-toggle {
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      position: relative;
-      color: #fff;
-      cursor: pointer;
-      border: 1px solid rgba(255, 255, 255, .2);
-      background: linear-gradient(135deg, #7c6cff, #b48dff);
-      box-shadow: 0 12px 34px rgba(124, 108, 255, .34), inset 0 1px 0 rgba(255, 255, 255, .25);
-      transition: .3s var(--ease);
-    }
-
-    .chat-toggle:hover {
-      transform: scale(1.06) translateY(-3px);
-      box-shadow: 0 18px 44px rgba(124, 108, 255, .46), inset 0 1px 0 rgba(255, 255, 255, .3)
-    }
-
-    .chat-toggle .open-icon {
-      transition: transform .35s var(--ease), opacity .25s
-    }
-
-    .chat-toggle .close-icon {
-      position: absolute;
-      transform: rotate(-90deg) scale(0);
-      opacity: 0;
-      transition: transform .35s var(--ease), opacity .25s
-    }
-
-    .chat-toggle.active .open-icon {
-      transform: rotate(90deg) scale(0);
-      opacity: 0
-    }
-
-    .chat-toggle.active .close-icon {
-      transform: rotate(0) scale(1);
-      opacity: 1
-    }
-
-    .chat-toggle .ping {
-      position: absolute;
-      top: 2px;
-      right: 2px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--success);
-      border: 2px solid #0b0d13;
-      box-shadow: 0 0 10px rgba(89, 214, 161, .9);
-      animation: ping 2s infinite;
-    }
-
-    @keyframes ping {
-
-      0%,
-      100% {
-        opacity: 1
-      }
-
-      50% {
-        opacity: .35
-      }
-    }
-
-    .chat-window {
-      width: 380px;
-      height: 540px;
-      max-height: calc(100vh - 130px);
-      max-width: calc(100vw - 36px);
-      background: rgba(11, 13, 19, .94);
-      backdrop-filter: blur(26px);
-      -webkit-backdrop-filter: blur(26px);
-      border: 1px solid var(--line-strong);
-      border-radius: 22px;
-      overflow: hidden;
-      box-shadow: 0 30px 90px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(255, 255, 255, .06);
-      display: flex;
-      flex-direction: column;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(24px) scale(.95);
-      transform-origin: bottom right;
-      transition: .4s var(--ease);
-    }
-
-    .chat-window.open {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0) scale(1)
-    }
-
-    .chat-head {
-      padding: 15px 18px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, rgba(139, 124, 255, .06), rgba(255, 255, 255, .01));
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .chat-id {
-      display: flex;
-      align-items: center;
-      gap: 10px
-    }
-
-    .chat-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(135deg, #7c6cff, #b48dff);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(124, 108, 255, .34), inset 0 1px 0 rgba(255, 255, 255, .24);
-    }
-
-    .chat-avatar svg {
-      width: 16px;
-      height: 16px
-    }
-
-    .chat-meta {
-      display: grid;
-      gap: 1px
-    }
-
-    .chat-meta strong {
-      font: 600 13px "Instrument Sans";
-      letter-spacing: -.01em
-    }
-
-    .chat-meta span {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      color: var(--dim);
-      font: 9px "JetBrains Mono";
-      letter-spacing: .06em;
-      text-transform: uppercase
-    }
-
-    .chat-meta span i {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 8px rgba(89, 214, 161, .9)
-    }
-
-    .chat-close {
-      width: 32px;
-      height: 32px;
-      border-radius: 9px;
-      display: grid;
-      place-items: center;
-      color: var(--dim);
-      cursor: pointer;
-      transition: .2s;
-      background: transparent
-    }
-
-    .chat-close:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, .05)
-    }
-
-    .chat-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255, 255, 255, .14) transparent;
-    }
-
-    .chat-body::-webkit-scrollbar {
-      width: 5px
-    }
-
-    .chat-body::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, .14);
-      border-radius: 99px
-    }
-
-    .chat-body::-webkit-scrollbar-track {
-      background: transparent
-    }
-
-    .chat-msg {
-      max-width: 86%;
-      padding: 11px 14px;
-      border-radius: 14px;
-      font-size: 12.5px;
-      line-height: 1.55;
-      animation: msgIn .3s var(--ease);
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-
-    @keyframes msgIn {
-      from {
-        opacity: 0;
-        transform: translateY(8px)
-      }
-
-      to {
-        opacity: 1;
-        transform: none
-      }
-    }
-
-    .chat-msg.bot {
-      align-self: flex-start;
-      background: rgba(255, 255, 255, .045);
-      border: 1px solid var(--line);
-      color: #e8e9ee;
-      border-bottom-left-radius: 5px
-    }
-
-    .chat-msg.user {
-      align-self: flex-end;
-      background: linear-gradient(135deg, rgba(124, 108, 255, .32), rgba(180, 141, 255, .16));
-      border: 1px solid rgba(139, 124, 255, .3);
-      color: #fff;
-      border-bottom-right-radius: 5px;
-    }
-
-    .chat-msg.typing {
-      align-self: flex-start;
-      background: rgba(255, 255, 255, .045);
-      border: 1px solid var(--line);
-      padding: 13px 15px;
-      display: flex;
-      gap: 4px
-    }
-
-    .chat-msg.typing i {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--muted);
-      animation: dot 1.2s infinite ease-in-out both
-    }
-
-    .chat-msg.typing i:nth-child(2) {
-      animation-delay: .16s
-    }
-
-    .chat-msg.typing i:nth-child(3) {
-      animation-delay: .32s
-    }
-
-    @keyframes dot {
-
-      0%,
-      80%,
-      100% {
-        opacity: .25;
-        transform: scale(.85)
-      }
-
-      40% {
-        opacity: 1;
-        transform: scale(1)
-      }
-    }
-
-    .chat-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 4px
-    }
-
-    .chat-chip {
-      padding: 6px 10px;
-      border-radius: 9px;
-      font-size: 10px;
-      font-weight: 600;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, .03);
-      color: var(--muted);
-      cursor: pointer;
-      transition: .2s
-    }
-
-    .chat-chip:hover {
-      color: #fff;
-      border-color: rgba(139, 124, 255, .4);
-      background: rgba(139, 124, 255, .1);
-      transform: translateY(-1px)
-    }
-
-    .chat-foot {
-      padding: 12px;
-      border-top: 1px solid var(--line);
-      background: rgba(0, 0, 0, .28);
-      display: flex;
-      gap: 8px
-    }
-
-    .chat-input {
-      flex: 1;
-      background: rgba(255, 255, 255, .04);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 11px 13px;
-      color: #fff;
-      font-size: 12.5px;
-      outline: none;
-      transition: .2s var(--ease);
-    }
-
-    .chat-input::placeholder {
-      color: #696f7f
-    }
-
-    .chat-input:focus {
-      border-color: rgba(139, 124, 255, .5);
-      background: rgba(255, 255, 255, .06);
-      box-shadow: 0 0 0 3px rgba(139, 124, 255, .1)
-    }
-
-    .chat-send {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-      flex: 0 0 auto;
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      background: linear-gradient(135deg, #7c6cff, #a57cff);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, .18);
-      box-shadow: 0 6px 18px rgba(124, 108, 255, .3), inset 0 1px 0 rgba(255, 255, 255, .2);
-      transition: .2s var(--ease);
-    }
-
-    .chat-send:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 24px rgba(124, 108, 255, .42)
-    }
-
-    .chat-send:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-      transform: none
-    }
-
     @media (max-width:900px) {
       .result-top {
         grid-template-columns: 132px 1fr
@@ -2264,10 +1771,6 @@
 
       .result-body {
         grid-template-columns: 1fr
-      }
-
-      .about-grid {
-        grid-template-columns: repeat(2, 1fr)
       }
     }
 
@@ -2282,14 +1785,6 @@
 
       .brand-meta,
       .nav-chip {
-        display: none
-      }
-
-      .nav-link {
-        padding: 0 10px
-      }
-
-      .nav-link span {
         display: none
       }
 
@@ -2388,20 +1883,6 @@
         min-height: 205px
       }
 
-      .about-page {
-        padding: 40px 0 80px
-      }
-
-      .about-lead-card {
-        min-width: 0;
-        width: 100%;
-        padding: 26px 24px
-      }
-
-      .about-grid {
-        grid-template-columns: 1fr
-      }
-
       .footer-row {
         justify-content: center;
         text-align: center
@@ -2411,24 +1892,9 @@
         justify-content: center
       }
 
-      .chat-widget {
-        right: 12px;
-        bottom: 12px
-      }
-
-      .chat-window {
-        height: min(520px, calc(100vh - 100px))
-      }
-
-      .toast-container {
-        right: 12px;
-        top: 80px
-      }
-
-      .toast {
-        min-width: 0;
-        width: calc(100vw - 24px);
-        max-width: none
+      .chatbot-window {
+        width: calc(100vw - 48px);
+        right: 24px;
       }
     }
 
@@ -2446,13 +1912,12 @@
       }
     }
   </style>
-  <base target="_blank">
 </head>
 
 <body>
   <header class="topbar">
     <div class="container nav">
-      <a class="brand" href="#scan" data-route="scan" aria-label="CivicShield home">
+      <a class="brand" href="#" aria-label="CivicShield home">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none">
             <path d="M12 2 4 5.5v5.1c0 5 3.4 9.6 8 11.4 4.6-1.8 8-6.4 8-11.4V5.5L12 2Z" stroke="currentColor"
@@ -2468,23 +1933,6 @@
       </a>
 
       <div class="nav-actions">
-        <button class="nav-link" data-route="scan" type="button" aria-label="Scanner">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-            stroke-linejoin="round">
-            <circle cx="10.8" cy="10.8" r="7" />
-            <path d="m16 16 5 5" />
-          </svg>
-          <span>Scanner</span>
-        </button>
-
-        <button class="nav-link" data-route="about" type="button" aria-label="About the team">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 11v5M12 8h.01" />
-          </svg>
-          <span>About</span>
-        </button>
-
         <div class="nav-chip" title="Client-side UI is ready. API connects when available.">
           <span class="dot"></span> SYSTEM READY
         </div>
@@ -2500,376 +1948,312 @@
   </header>
 
   <main>
-    <div class="page active" id="page-scan">
-      <section class="hero">
-        <div class="container">
-          <div class="eyebrow">
-            <span class="eyebrow-mark">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 3v18M3 12h18" />
-              </svg>
-            </span>
-            Verification for the messages you don't fully trust
-          </div>
-
-          <h1>Know what you're looking at. <span>Before you act.</span></h1>
-          <p class="hero-sub">
-            Scan official-looking documents, suspicious links and urgent messages. CivicShield turns messy signals into
-            a clear risk verdict.
-          </p>
-
-          <div class="hero-meta" aria-label="Product capabilities">
-            <span><i class="mini-dot"></i>PDF / JPG / PNG</span>
-            <span><i class="mini-dot"></i>SMS / email / WhatsApp</span>
-            <span><i class="mini-dot"></i>Risk scoring</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="workspace">
-        <div class="container">
-          <div class="scanner-shell">
-            <div class="scanner">
-              <div class="modebar">
-                <div class="tabs" role="tablist" aria-label="Verification input">
-                  <button class="tab active" id="tab-upload" role="tab" aria-selected="true"
-                    aria-controls="panel-upload" data-tab="upload">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                      <path d="M12 16V4M7 9l5-5 5 5" />
-                      <path d="M5 12v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
-                    </svg>
-                    Upload file
-                  </button>
-                  <button class="tab" id="tab-text" role="tab" aria-selected="false" aria-controls="panel-text"
-                    data-tab="text">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                      <path d="M5 4h14M8 8h8M6 12h12M8 16h8M5 20h14" />
-                    </svg>
-                    Paste text
-                  </button>
-                </div>
-                <span class="mode-note">ANALYZE → EXPLAIN → ACT</span>
-              </div>
-
-              <div class="panel active" id="panel-upload" role="tabpanel" aria-labelledby="tab-upload">
-                <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose a document">
-                  <div class="drop-content">
-                    <div class="upload-orb">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <path d="M14 2v6h6M8 13l4-4 4 4M12 9v7" />
-                      </svg>
-                    </div>
-                    <h2 class="drop-title">Drop a document here</h2>
-                    <p class="drop-sub">or choose a file from this device</p>
-
-                    <button class="drop-cta" type="button" tabindex="-1">
-                      Browse files
-                      <span class="kbd">Ctrl<span class="kbd-sep">/</span>⌘<span class="kbd-sep">+</span>O</span>
-                    </button>
-
-                    <div class="file-types" aria-label="Supported formats">
-                      <span class="file-badge">PDF</span><span class="file-badge">JPG</span><span
-                        class="file-badge">PNG</span><span class="file-badge">WEBP</span>
-                      <span class="file-badge">MAX 5 MB</span>
-                    </div>
-                  </div>
-                </div>
-                <input id="fileInput" type="file" accept="application/pdf,image/png,image/jpeg,image/webp,text/plain" />
-
-                <div class="file-info" id="fileInfo">
-                  <div class="file-main">
-                    <div class="file-avatar">
-                      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
-                        stroke-width="1.7">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <path d="M14 2v6h6" />
-                      </svg>
-                    </div>
-                    <div class="file-text">
-                      <div class="file-name" id="fileName">document.pdf</div>
-                      <div class="file-size" id="fileSize">0 KB</div>
-                    </div>
-                  </div>
-                  <button class="file-remove" id="removeFile" title="Remove selected file"
-                    aria-label="Remove selected file">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                      stroke-width="1.7">
-                      <path d="m6 6 12 12M18 6 6 18" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <div class="panel" id="panel-text" role="tabpanel" aria-labelledby="tab-text">
-                <div class="text-wrap">
-                  <div class="textarea-shell">
-                    <label class="sr-only" for="textInput">Paste suspicious text</label>
-                    <textarea id="textInput" maxlength="12000"
-                      placeholder="Paste a suspicious SMS, WhatsApp message, email body, notice or link here…"></textarea>
-                    <div class="textarea-foot">
-                      <span>Paste anything that feels off. We'll surface the strongest signals.</span>
-                      <span id="charCount">0 / 12,000</span>
-                    </div>
-                  </div>
-
-                  <div class="samples">
-                    <span class="samples-label">Try a sample</span>
-                    <button class="sample-btn danger" data-sample="scam">
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
-                        stroke-width="1.8">
-                        <path d="M12 3 2.8 19h18.4L12 3Z" />
-                        <path d="M12 9v4M12 16.5h.01" />
-                      </svg>
-                      Scam SMS
-                    </button>
-                    <button class="sample-btn success" data-sample="safe">
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
-                        stroke-width="1.8">
-                        <path d="m5 12 4 4L19 6" />
-                      </svg>
-                      Safe notice
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="actionbar">
-                <div class="privacy">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                    <path d="M12 3 5 6v5c0 4.6 2.8 8.4 7 10 4.2-1.6 7-5.4 7-10V6l-7-3Z" />
-                    <path d="M9.5 12.2 11.3 14l3.5-3.6" />
-                  </svg>
-                  <span>Secure by design. Your input is not saved by this interface.</span>
-                </div>
-
-                <div class="action-right">
-                  <button class="btn btn-ghost" id="clearBtn" type="button">Clear</button>
-                  <button class="btn btn-primary" id="scanBtn" type="button">
-                    <span class="btn-text">Analyze now</span>
-                    <svg class="btn-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                      stroke-width="1.8">
-                      <circle cx="10.8" cy="10.8" r="7" />
-                      <path d="m16 16 5 5" />
-                    </svg>
-                    <span class="btn-loader" aria-hidden="true"></span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="trust-strip" aria-label="Verification benefits">
-            <div class="trust-card">
-              <div class="trust-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                  stroke-width="1.7">
-                  <path d="M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0Z" />
-                  <path d="m8 12 2.3 2.2L16.5 8" />
-                </svg></div>
-              <div class="trust-copy"><strong>Signals, not guesses</strong><span>Breaks a message into evidence you can
-                  inspect.</span></div>
-            </div>
-            <div class="trust-card">
-              <div class="trust-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                  stroke-width="1.7">
-                  <path d="M4 19V5M4 19h16" />
-                  <path d="m7 15 3-3 2 2 5-6" />
-                </svg></div>
-              <div class="trust-copy"><strong>One clear risk score</strong><span>Easy to read before you decide what to
-                  do next.</span></div>
-            </div>
-            <div class="trust-card">
-              <div class="trust-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                  stroke-width="1.7">
-                  <path d="M12 3v18M3 12h18" />
-                  <circle cx="12" cy="12" r="8" />
-                </svg></div>
-              <div class="trust-copy"><strong>Built for everyday scams</strong><span>Domains, urgency, payment pressure
-                  and document cues.</span></div>
-            </div>
-          </div>
-
-          <section id="results" aria-live="polite">
-            <div class="result-shell">
-              <div class="result-top" id="resultCard">
-                <div class="risk-meter" aria-label="Risk score">
-                  <svg viewBox="0 0 132 132">
-                    <circle class="track" cx="66" cy="66" r="60"></circle>
-                    <circle class="fill" id="scoreFill" cx="66" cy="66" r="60"></circle>
-                  </svg>
-                  <div class="risk-content">
-                    <div class="risk-number" id="resScore">0</div>
-                    <div class="risk-scale">RISK / 10</div>
-                  </div>
-                </div>
-
-                <div class="result-copy">
-                  <div class="result-label"><span id="resBadgeIcon"></span><span id="resBadgeText">Verified safe</span>
-                  </div>
-                  <h2 class="result-title" id="resVerdict">Analysis complete</h2>
-                  <p class="result-summary" id="resSummary">Generating a clear explanation…</p>
-                </div>
-
-                <div class="result-actions">
-                  <button class="mini-action" id="copyResultBtn" type="button">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
-                      stroke-width="1.7">
-                      <rect x="9" y="9" width="10" height="10" rx="2" />
-                      <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
-                    </svg>
-                    Copy
-                  </button>
-                  <button class="mini-action" id="newScanBtn" type="button">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
-                      stroke-width="1.7">
-                      <path d="M4 7v5h5M20 17v-5h-5" />
-                      <path d="M18.5 9A7 7 0 0 0 6 7M5.5 15A7 7 0 0 0 18 17" />
-                    </svg>
-                    New scan
-                  </button>
-                </div>
-              </div>
-
-              <div class="result-body">
-                <div class="result-panel">
-                  <div class="panel-head">
-                    <div class="panel-title">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
-                        stroke-width="1.7">
-                        <path d="M4 5h16M4 10h16M4 15h10M4 20h16" />
-                      </svg>
-                      Key findings
-                    </div>
-                    <span class="panel-meta" id="findingCount">0 signals</span>
-                  </div>
-                  <div class="findings" id="resFindings"></div>
-                </div>
-
-                <div class="result-panel" id="textPreviewSection">
-                  <div class="panel-head">
-                    <div class="panel-title">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
-                        stroke-width="1.7">
-                        <path d="M7 4h10M7 8h10M7 12h10M7 16h6" />
-                        <path d="M5 3h14v18H5z" />
-                      </svg>
-                      Extracted text
-                    </div>
-                    <span class="panel-meta">RAW PREVIEW</span>
-                  </div>
-                  <div class="text-preview" id="resExtractedText">…</div>
-                  <div class="result-note">A high risk score means the content contains multiple suspicious signals. It
-                    is not a legal or government-issued verification.</div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      </section>
-
-      <section class="insights">
-        <div class="container">
-          <div class="section-head">
-            <div class="section-kicker">Why CivicShield</div>
-            <h2 class="section-title">Designed around the signals scammers exploit.</h2>
-            <p class="section-desc">The interface is intentionally quiet. The analysis itself gets the attention, with
-              enough context to understand why the verdict moved.</p>
-          </div>
-
-          <div class="feature-grid">
-            <article class="feature">
-              <div class="feature-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none"
-                  stroke="currentColor" stroke-width="1.7">
-                  <path d="M12 3 4 6v5c0 4.7 3 8.7 8 10 5-1.3 8-5.3 8-10V6l-8-3Z" />
-                  <path d="M8.5 12.2 11 14.5l4.5-4.7" />
-                </svg></div>
-              <h3>Language &amp; intent</h3>
-              <p>Surfaces urgency, threats, payment pressure, impersonation language and other social-engineering
-                patterns.</p>
-              <div class="feature-tag">01 / CONTENT</div>
-            </article>
-
-            <article class="feature">
-              <div class="feature-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none"
-                  stroke="currentColor" stroke-width="1.7">
-                  <circle cx="12" cy="12" r="8" />
-                  <path d="M4 12h16M12 4c2.4 2.3 3.6 5 3.6 8s-1.2 5.7-3.6 8c-2.4-2.3-3.6-5-3.6-8S9.6 6.3 12 4Z" />
-                </svg></div>
-              <h3>Domain inspection</h3>
-              <p>Flags lookalike government domains, suspicious URLs and mismatched identity cues that can hide behind
-                familiar names.</p>
-              <div class="feature-tag">02 / LINKS</div>
-            </article>
-
-            <article class="feature">
-              <div class="feature-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none"
-                  stroke="currentColor" stroke-width="1.7">
-                  <path d="M6 3h8l4 4v14H6z" />
-                  <path d="M14 3v5h4M9 13h6M9 17h5" />
-                </svg></div>
-              <h3>Document cues</h3>
-              <p>Looks for structural oddities, suspicious formatting and missing cues that would normally appear in
-                official notices.</p>
-              <div class="feature-tag">03 / DOCUMENTS</div>
-            </article>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <div class="page" id="page-about">
-      <section class="about-page">
-        <div class="container">
-          <button class="about-back" data-route="scan" type="button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"
-              stroke-linejoin="round">
-              <path d="M15 6l-6 6 6 6" />
+    <section class="hero">
+      <div class="container">
+        <div class="eyebrow">
+          <span class="eyebrow-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3v18M3 12h18" />
             </svg>
-            Back to scanner
-          </button>
+          </span>
+          Verification for the messages you don't fully trust
+        </div>
 
-          <header class="about-head">
-            <div class="about-kicker">Project Architecture</div>
-            <h2 class="about-title">Built by Team CivicShield</h2>
-            <p class="about-sub">A focused group combining full-stack engineering, conversational AI, backend
-              processing, heuristic scoring and frontend craft.</p>
-          </header>
+        <h1>Know what you're looking at. <span>Before you act.</span></h1>
+        <p class="hero-sub">
+          Scan official-looking documents, suspicious links and urgent messages. CivicShield turns messy signals into a
+          clear risk verdict.
+        </p>
 
-          <div class="about-lead-wrap">
-            <div class="about-lead-card">
-              <div class="lead-badge">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                  stroke-linejoin="round">
-                  <path d="m12 3 2.4 5.9 6.4.5-4.9 4.1 1.5 6.3L12 16.6l-5.4 3.2 1.5-6.3-4.9-4.1 6.4-.5L12 3Z" />
-                </svg>
-                Project Lead
+        <div class="hero-meta" aria-label="Product capabilities">
+          <span><i class="mini-dot"></i>PDF / JPG / PNG</span>
+          <span><i class="mini-dot"></i>SMS / email / WhatsApp</span>
+          <span><i class="mini-dot"></i>Risk scoring</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="container">
+        <div class="scanner-shell">
+          <div class="scanner">
+            <div class="modebar">
+              <div class="tabs" role="tablist" aria-label="Verification input">
+                <button class="tab active" id="tab-upload" role="tab" aria-selected="true" aria-controls="panel-upload"
+                  data-tab="upload">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M12 16V4M7 9l5-5 5 5" />
+                    <path d="M5 12v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
+                  </svg>
+                  Upload file
+                </button>
+                <button class="tab" id="tab-text" role="tab" aria-selected="false" aria-controls="panel-text"
+                  data-tab="text">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M5 4h14M8 8h8M6 12h12M8 16h8M5 20h14" />
+                  </svg>
+                  Paste text
+                </button>
               </div>
-              <div class="lead-name">Naishal Nadiya</div>
-              <div class="lead-role">Lead Full-Stack Developer &amp; Architect</div>
+              <span class="mode-note">ANALYZE → EXPLAIN → ACT</span>
             </div>
-          </div>
 
-          <div class="about-grid">
-            <div class="about-card">
-              <div class="about-card-name">Krish</div>
-              <div class="about-card-role">Conversational AI &amp; Chatbot</div>
+            <div class="panel active" id="panel-upload" role="tabpanel" aria-labelledby="tab-upload">
+              <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose a document">
+                <div class="drop-content">
+                  <div class="upload-orb">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <path d="M14 2v6h6M8 13l4-4 4 4M12 9v7" />
+                    </svg>
+                  </div>
+                  <h2 class="drop-title">Drop a document here</h2>
+                  <p class="drop-sub">or choose a file from this device</p>
+                  <div class="drop-cta">Browse files <kbd>Ctrl / ⌘ + O</kbd></div>
+                  <div class="file-types" aria-label="Supported formats">
+                    <span class="file-badge">PDF</span><span class="file-badge">JPG</span><span
+                      class="file-badge">PNG</span><span class="file-badge">WEBP</span>
+                    <span class="file-badge">MAX 5 MB</span>
+                  </div>
+                </div>
+              </div>
+              <input id="fileInput" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" />
+
+              <div class="file-info" id="fileInfo">
+                <div class="file-main">
+                  <div class="file-avatar">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
+                      stroke-width="1.7">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <path d="M14 2v6h6" />
+                    </svg>
+                  </div>
+                  <div class="file-text">
+                    <div class="file-name" id="fileName">document.pdf</div>
+                    <div class="file-size" id="fileSize">0 KB</div>
+                  </div>
+                </div>
+                <button class="file-remove" id="removeFile" title="Remove selected file"
+                  aria-label="Remove selected file">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7">
+                    <path d="m6 6 12 12M18 6 6 18" />
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div class="about-card">
-              <div class="about-card-name">Pranav</div>
-              <div class="about-card-role">Backend File Processing</div>
+
+            <div class="panel" id="panel-text" role="tabpanel" aria-labelledby="tab-text">
+              <div class="text-wrap">
+                <div class="textarea-shell">
+                  <label class="sr-only" for="textInput">Paste suspicious text</label>
+                  <textarea id="textInput" maxlength="12000"
+                    placeholder="Paste a suspicious SMS, WhatsApp message, email body, notice or link here…"></textarea>
+                  <div class="textarea-foot">
+                    <span>Paste anything that feels off. We'll surface the strongest signals.</span>
+                    <span id="charCount">0 / 12,000</span>
+                  </div>
+                </div>
+
+                <div class="samples">
+                  <span class="samples-label">Try a sample</span>
+                  <button class="sample-btn danger" data-sample="scam">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                      stroke-width="1.8">
+                      <path d="M12 3 2.8 19h18.4L12 3Z" />
+                      <path d="M12 9v4M12 16.5h.01" />
+                    </svg>
+                    Scam SMS
+                  </button>
+                  <button class="sample-btn success" data-sample="safe">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                      stroke-width="1.8">
+                      <path d="m5 12 4 4L19 6" />
+                    </svg>
+                    Safe notice
+                  </button>
+                </div>
+              </div>
             </div>
-            <div class="about-card">
-              <div class="about-card-name">Diya</div>
-              <div class="about-card-role">Heuristic Engine &amp; Scoring</div>
-            </div>
-            <div class="about-card">
-              <div class="about-card-name">Ansh</div>
-              <div class="about-card-role">Frontend Fine-Tuning &amp; QA</div>
+
+            <div class="actionbar">
+              <div class="privacy">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M12 3 5 6v5c0 4.6 2.8 8.4 7 10 4.2-1.6 7-5.4 7-10V6l-7-3Z" />
+                  <path d="M9.5 12.2 11.3 14l3.5-3.6" />
+                </svg>
+                <span>Secure by design. Your input is not saved by this interface.</span>
+              </div>
+
+              <div class="action-right">
+                <button class="btn btn-ghost" id="clearBtn" type="button">Clear</button>
+                <button class="btn btn-primary" id="scanBtn" type="button">
+                  <span class="btn-text">Analyze now</span>
+                  <svg class="btn-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                    stroke-width="1.8">
+                    <circle cx="10.8" cy="10.8" r="7" />
+                    <path d="m16 16 5 5" />
+                  </svg>
+                  <span class="btn-loader" aria-hidden="true"></span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </section>
-    </div>
+
+        <div class="trust-strip" aria-label="Verification benefits">
+          <div class="trust-card">
+            <div class="trust-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                stroke-width="1.7">
+                <path d="M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0Z" />
+                <path d="m8 12 2.3 2.2L16.5 8" />
+              </svg></div>
+            <div class="trust-copy"><strong>Signals, not guesses</strong><span>Breaks a message into evidence you can
+                inspect.</span></div>
+          </div>
+          <div class="trust-card">
+            <div class="trust-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                stroke-width="1.7">
+                <path d="M4 19V5M4 19h16" />
+                <path d="m7 15 3-3 2 2 5-6" />
+              </svg></div>
+            <div class="trust-copy"><strong>One clear risk score</strong><span>Easy to read before you decide what to do
+                next.</span></div>
+          </div>
+          <div class="trust-card">
+            <div class="trust-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                stroke-width="1.7">
+                <path d="M12 3v18M3 12h18" />
+                <circle cx="12" cy="12" r="8" />
+              </svg></div>
+            <div class="trust-copy"><strong>Built for everyday scams</strong><span>Domains, urgency, payment pressure
+                and document cues.</span></div>
+          </div>
+        </div>
+
+        <section id="results" aria-live="polite">
+          <div class="result-shell">
+            <div class="result-top" id="resultCard">
+              <div class="risk-meter" aria-label="Risk score">
+                <svg viewBox="0 0 132 132">
+                  <circle class="track" cx="66" cy="66" r="60"></circle>
+                  <circle class="fill" id="scoreFill" cx="66" cy="66" r="60"></circle>
+                </svg>
+                <div class="risk-content">
+                  <div class="risk-number" id="resScore">0</div>
+                  <div class="risk-scale">RISK / 10</div>
+                </div>
+              </div>
+
+              <div class="result-copy">
+                <div class="result-label"><span id="resBadgeIcon"></span><span id="resBadgeText">Verified safe</span>
+                </div>
+                <h2 class="result-title" id="resVerdict">Analysis complete</h2>
+                <p class="result-summary" id="resSummary">Generating a clear explanation…</p>
+              </div>
+
+              <div class="result-actions">
+                <button class="mini-action" id="copyResultBtn" type="button">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7">
+                    <rect x="9" y="9" width="10" height="10" rx="2" />
+                    <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+                  </svg>
+                  Copy
+                </button>
+                <button class="mini-action" id="newScanBtn" type="button">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7">
+                    <path d="M4 7v5h5M20 17v-5h-5" />
+                    <path d="M18.5 9A7 7 0 0 0 6 7M5.5 15A7 7 0 0 0 18 17" />
+                  </svg>
+                  New scan
+                </button>
+              </div>
+            </div>
+
+            <div class="result-body">
+              <div class="result-panel">
+                <div class="panel-head">
+                  <div class="panel-title">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                      stroke-width="1.7">
+                      <path d="M4 5h16M4 10h16M4 15h10M4 20h16" />
+                    </svg>
+                    Key findings
+                  </div>
+                  <span class="panel-meta" id="findingCount">0 signals</span>
+                </div>
+                <div class="findings" id="resFindings"></div>
+              </div>
+
+              <div class="result-panel" id="textPreviewSection">
+                <div class="panel-head">
+                  <div class="panel-title">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                      stroke-width="1.7">
+                      <path d="M7 4h10M7 8h10M7 12h10M7 16h6" />
+                      <path d="M5 3h14v18H5z" />
+                    </svg>
+                    Extracted text
+                  </div>
+                  <span class="panel-meta">RAW PREVIEW</span>
+                </div>
+                <div class="text-preview" id="resExtractedText">…</div>
+                <div class="result-note">A high risk score means the content contains multiple suspicious signals. It is
+                  not a legal or government-issued verification.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="insights">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-kicker">Why CivicShield</div>
+          <h2 class="section-title">Designed around the signals scammers exploit.</h2>
+          <p class="section-desc">The interface is intentionally quiet. The analysis itself gets the attention, with
+            enough context to understand why the verdict moved.</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
+                stroke-width="1.7">
+                <path d="M12 3 4 6v5c0 4.7 3 8.7 8 10 5-1.3 8-5.3 8-10V6l-8-3Z" />
+                <path d="M8.5 12.2 11 14.5l4.5-4.7" />
+              </svg></div>
+            <h3>Language & intent</h3>
+            <p>Surfaces urgency, threats, payment pressure, impersonation language and other social-engineering
+              patterns.</p>
+            <div class="feature-tag">01 / CONTENT</div>
+          </article>
+
+          <article class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
+                stroke-width="1.7">
+                <circle cx="12" cy="12" r="8" />
+                <path d="M4 12h16M12 4c2.4 2.3 3.6 5 3.6 8s-1.2 5.7-3.6 8c-2.4-2.3-3.6-5-3.6-8S9.6 6.3 12 4Z" />
+              </svg></div>
+            <h3>Domain inspection</h3>
+            <p>Flags lookalike government domains, suspicious URLs and mismatched identity cues that can hide behind
+              familiar names.</p>
+            <div class="feature-tag">02 / LINKS</div>
+          </article>
+
+          <article class="feature">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
+                stroke-width="1.7">
+                <path d="M6 3h8l4 4v14H6z" />
+                <path d="M14 3v5h4M9 13h6M9 17h5" />
+              </svg></div>
+            <h3>Document cues</h3>
+            <p>Looks for structural oddities, suspicious formatting and missing cues that would normally appear in
+              official notices.</p>
+            <div class="feature-tag">03 / DOCUMENTS</div>
+          </article>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
@@ -2903,82 +2287,37 @@
     </aside>
   </div>
 
-  <div class="chat-widget" id="chatWidget">
-    <div class="chat-window" id="chatWindow" role="dialog" aria-label="CivicShield AI Assistant">
-      <div class="chat-head">
-        <div class="chat-id">
-          <span class="chat-avatar" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <path d="M12 3 4 6v5c0 4.7 3 8.7 8 10 5-1.3 8-5.3 8-10V6l-8-3Z" />
-              <path d="M9 12h6M9 15h4" />
-            </svg>
-          </span>
-          <div class="chat-meta">
-            <strong>CivicShield Intelligence</strong>
-            <span><i></i>Online · No data stored</span>
-          </div>
+  <!-- Chatbot Component -->
+  <div class="chatbot-container">
+    <button class="chatbot-toggle" id="chatbotToggle" aria-label="Open chatbot">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        <path d="M8 10h.01M12 10h.01M16 10h.01"></path>
+      </svg>
+    </button>
+    <div class="chatbot-window" id="chatbotWindow">
+      <div class="chatbot-header">
+        <div class="chatbot-header-title">
+          <span class="status-dot"></span>
+          CivicShield Assistant
         </div>
-        <button class="chat-close" id="chatClose" aria-label="Close chat">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
-        </button>
+        <button class="chatbot-close" id="chatbotClose" aria-label="Close chatbot">&times;</button>
       </div>
-
-      <div class="chat-body" id="chatBody">
-        <div class="chat-msg bot">Hi. I'm the CivicShield assistant.
-
-          I can help you:
-          • Assess a suspicious message or notice
-          • Explain common Indian scam patterns (UPI, KYC, tax, etc.)
-          • Guide you through official reporting channels
-
-          What would you like to check?</div>
-        <div class="chat-chips" id="chatChips">
-          <button class="chat-chip" data-chip="Explain my last scan">Explain my last scan</button>
-          <button class="chat-chip" data-chip="How do I report a scam?">Report a scam</button>
-          <button class="chat-chip" data-chip="What is a KYC scam?">KYC scam</button>
-          <button class="chat-chip" data-chip="How do I verify a .gov.in domain?">Verify .gov.in</button>
-        </div>
+      <div class="chatbot-messages" id="chatbotMessages">
+        <div class="chat-msg bot">Hello! I'm the CivicShield Assistant. Ask me anything about your scan results,
+          suspicious messages, or online safety.</div>
       </div>
-
-      <div class="chat-foot">
-        <input type="text" class="chat-input" id="chatInput" placeholder="Ask about a scam, law, or notice…"
-          autocomplete="off" aria-label="Type your message" />
-        <button class="chat-send" id="chatSend" aria-label="Send message">
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="m22 2-7 20-4-9-9-4Z" />
-            <path d="M22 2 11 13" />
-          </svg>
-        </button>
+      <div class="chatbot-input-area">
+        <input type="text" id="chatbotInput" placeholder="Type a message..." autocomplete="off">
+        <button id="chatbotSend">Send</button>
       </div>
     </div>
-
-    <button class="chat-toggle" id="chatToggle" aria-label="Open AI assistant">
-      <svg class="open-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
-        stroke-width="2" stroke-linecap="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
-      <svg class="close-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
-        stroke-width="2" stroke-linecap="round">
-        <path d="M18 6 6 18M6 6l12 12" />
-      </svg>
-      <span class="ping" aria-hidden="true"></span>
-    </button>
   </div>
 
   <div class="toast-container" id="toastContainer"></div>
 
   <script>
-    /* ══════════════════════════════════════════════════
-       GLOBAL DEBUG HELPER — always visible in console
-       ══════════════════════════════════════════════════ */
-    const LOG = (...args) => console.log("%c[CivicShield]", "color:#8b7cff;font-weight:bold", ...args);
-    const ERR = (...args) => console.error("[CivicShield]", ...args);
-
-    LOG("Script loaded — waiting for DOMContentLoaded");
-
     const ICONS = {
       safe: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6"/></svg>`,
       warn: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2.8 19h18.4L12 3Z"/><path d="M12 9v4M12 16.5h.01"/></svg>`,
@@ -2986,64 +2325,25 @@
       info: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>`
     };
 
-    /* ══════════════════════════════════════════════════
-       ROUTER
-       ══════════════════════════════════════════════════ */
-    const Router = {
-      current: "scan",
-      init() {
-        document.querySelectorAll("[data-route]").forEach(el => {
-          el.addEventListener("click", e => {
-            e.preventDefault();
-            this.go(el.dataset.route);
-          });
-        });
+    const BACKEND_URL = "https://civicshield-backend-pqh0.onrender.com";
 
-        window.addEventListener("hashchange", () => {
-          const route = location.hash.replace("#", "") === "about" ? "about" : "scan";
-          if (route !== this.current) this.go(route, false);
-        });
-
-        const initial = location.hash.replace("#", "") === "about" ? "about" : "scan";
-        this.go(initial, false);
-      },
-      go(route, updateHash = true) {
-        this.current = route;
-        document.querySelectorAll(".page").forEach(p => {
-          p.classList.toggle("active", p.id === `page-${route}`);
-        });
-        document.querySelectorAll(".nav-link").forEach(el => {
-          el.classList.toggle("active", el.dataset.route === route);
-        });
-        if (updateHash) {
-          history.replaceState(null, "", route === "about" ? "#about" : "#scan");
-        }
-        try { window.scrollTo({ top: 0, behavior: "auto" }); } catch (_) { }
-      }
-    };
-
-    /* ══════════════════════════════════════════════════
-       MAIN APP
-       ══════════════════════════════════════════════════ */
     const App = {
       activeTab: "upload",
       file: null,
       lastData: null,
       lastInput: "",
       historyKey: "civicshield_history_v2",
-      scanning: false,
 
       init() {
-        LOG("App.init()");
         this.cache();
         this.bindTabs();
         this.bindUpload();
         this.bindText();
         this.bindActions();
         this.bindHistory();
+        this.bindChatbot();
         this.renderHistory();
         this.bindGlobalShortcuts();
-        LOG("App ready — file:", this.file, "| activeTab:", this.activeTab);
       },
 
       cache() {
@@ -3072,17 +2372,21 @@
         const dz = this.$("#dropzone");
         const input = this.$("#fileInput");
         const remove = this.$("#removeFile");
-        if (!dz || !input) { ERR("Dropzone or file input missing"); return; }
 
         dz.addEventListener("click", () => input.click());
         dz.addEventListener("keydown", e => {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); }
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            input.click();
+          }
         });
         ["dragenter", "dragover"].forEach(type => dz.addEventListener(type, e => {
-          e.preventDefault(); dz.classList.add("over");
+          e.preventDefault();
+          dz.classList.add("over");
         }));
         ["dragleave", "drop"].forEach(type => dz.addEventListener(type, e => {
-          e.preventDefault(); dz.classList.remove("over");
+          e.preventDefault();
+          dz.classList.remove("over");
         }));
         dz.addEventListener("drop", e => {
           const file = e.dataTransfer.files?.[0];
@@ -3092,14 +2396,14 @@
           const file = e.target.files?.[0];
           if (file) this.handleFile(file);
         });
-        if (remove) remove.addEventListener("click", e => {
-          e.stopPropagation(); this.clearFile();
+        remove.addEventListener("click", e => {
+          e.stopPropagation();
+          this.clearFile();
         });
       },
 
       handleFile(file) {
-        LOG("handleFile:", file.name, file.type, file.size);
-        const valid = ["application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"];
+        const valid = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
         if (!valid.includes(file.type)) {
           this.toast("Use a PDF, PNG, JPG or WEBP file.", "error");
           return;
@@ -3126,7 +2430,6 @@
 
       bindText() {
         const input = this.$("#textInput");
-        if (!input) return;
         input.addEventListener("input", () => {
           this.$("#charCount").textContent = `${input.value.length.toLocaleString()} / 12,000`;
         });
@@ -3147,29 +2450,10 @@
       },
 
       bindActions() {
-        LOG("bindActions() — binding buttons");
-        const scanBtn = this.$("#scanBtn");
-        if (scanBtn) {
-          // PRIMARY: direct binding
-          scanBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            LOG("Primary click handler fired on #scanBtn");
-            this.scan();
-          });
-          LOG("  ✓ scanBtn bound");
-        } else {
-          ERR("  ✗ #scanBtn not found!");
-        }
-
-        const clearBtn = this.$("#clearBtn");
-        if (clearBtn) clearBtn.addEventListener("click", () => this.clearAll());
-
-        const newScanBtn = this.$("#newScanBtn");
-        if (newScanBtn) newScanBtn.addEventListener("click", () => this.newScan());
-
-        const copyResultBtn = this.$("#copyResultBtn");
-        if (copyResultBtn) copyResultBtn.addEventListener("click", () => this.copyResult());
+        this.$("#scanBtn").addEventListener("click", () => this.scan());
+        this.$("#clearBtn").addEventListener("click", () => this.clearAll());
+        this.$("#newScanBtn").addEventListener("click", () => this.newScan());
+        this.$("#copyResultBtn").addEventListener("click", () => this.copyResult());
 
         this.$$("[data-toast]").forEach(btn => {
           btn.addEventListener("click", () => this.toast(btn.dataset.toast, "info"));
@@ -3178,140 +2462,84 @@
 
       clearAll() {
         this.clearFile();
-        const textInput = this.$("#textInput");
-        if (textInput) {
-          textInput.value = "";
-          textInput.dispatchEvent(new Event("input"));
-        }
+        this.$("#textInput").value = "";
+        this.$("#textInput").dispatchEvent(new Event("input"));
         this.hideResults();
         this.toast("Scanner cleared.", "info");
       },
 
       newScan() {
         this.clearAll();
-        Router.go("scan");
-        setTimeout(() => {
-          const ws = document.querySelector(".workspace");
-          if (ws) window.scrollTo({ top: ws.offsetTop - 24, behavior: "smooth" });
-        }, 60);
+        window.scrollTo({ top: document.querySelector(".workspace").offsetTop - 24, behavior: "smooth" });
       },
 
       async scan() {
-        if (this.scanning) return;
-
-        this.scanning = true;
-
         const btn = this.$("#scanBtn");
+        let formData = new FormData();
+
+        if (this.activeTab === "upload") {
+          if (!this.file) {
+            this.toast("Choose a file before analyzing.", "error");
+            return;
+          }
+          formData.append("file", this.file);
+          this.lastInput = this.file.name;
+        } else {
+          const value = this.$("#textInput").value.trim();
+          if (!value) {
+            this.toast("Paste some text before analyzing.", "error");
+            return;
+          }
+          formData.append("text", value);
+          this.lastInput = value;
+        }
+
+        btn.classList.add("loading");
+        btn.disabled = true;
+        this.hideResults();
+
+        // Show a "waking up" toast if the backend is on a cold start
+        const coldStartTimer = setTimeout(() => {
+          this.toast("Backend server is waking up. This may take 30-50 seconds...", "info");
+        }, 4000);
 
         try {
-          let value = "";
+          const response = await fetch(`${BACKEND_URL}/api/scan`, { method: "POST", body: formData });
+          clearTimeout(coldStartTimer);
 
-          if (this.activeTab === "text") {
-            value = this.$("#textInput")?.value.trim() || "";
-
-            if (!value) {
-              this.toast("Paste some text before analyzing.", "error");
-              return;
-            }
-
-            this.lastInput = value;
-
-          } else {
-            if (!this.file) {
-              this.toast("Choose a file before analyzing.", "error");
-              return;
-            }
-
-            this.lastInput = this.file.name;
-          }
-
-          if (btn) {
-            btn.classList.add("loading");
-            btn.disabled = true;
-          }
-          let result;
+          let data;
           try {
-            const formData = new FormData();
-            if (this.activeTab === "text") {
-              formData.append("text", value);
-            } else {
-              formData.append("file", this.file);
-            }
-
-            const response = await fetch("/api/scan", {
-              method: "POST",
-              body: formData
-            });
-
-            if (!response.ok) {
-              const err = await response.json().catch(() => ({}));
-              throw new Error(err.error || "Server error");
-            }
-
-            const data = await response.json();
-            result = this.normalizeData(data);
-          } catch (e) {
-            console.warn("API scan failed, falling back to offline", e);
-            result = this.getOfflineResult();
+            data = await response.json();
+          } catch {
+            throw new Error("The scan service returned an invalid response.");
           }
-
-          this.renderResults(result, false);
-          this.toast("Analysis complete.", "success");
-
-        } catch (err) {
-          console.error("Scan error:", err);
-          this.toast("Analysis failed.", "error");
+          if (!response.ok) throw new Error(data?.error || "The scan service could not complete the request.");
+          this.renderResults(this.normalizeData(data), false);
+        } catch (error) {
+          clearTimeout(coldStartTimer);
+          this.renderResults(this.getOfflineResult(), true);
+          this.toast("API unavailable. Showing local demo analysis.", "info");
+          console.warn("CivicShield demo fallback:", error);
         } finally {
-          if (btn) {
-            btn.classList.remove("loading");
-            btn.disabled = false;
-          }
-
-          this.scanning = false;
+          btn.classList.remove("loading");
+          btn.disabled = false;
         }
       },
 
       normalizeData(data) {
-        // Handle BOTH the new schema (0-10 risk) and legacy (0-100 trust)
-        let score;
-        if (typeof data?.score === "number") {
-          // If score > 10, it's probably the old trust-scale (0-100)
-          // Convert: risk = (100 - trust) / 10
-          if (data.score > 10 && data.score <= 100 && data.trust_score === undefined) {
-            score = (100 - data.score) / 10;
-            LOG("  Converted legacy trust score", data.score, "→ risk", score);
-          } else {
-            score = data.score;
-          }
-        } else {
-          score = 0;
-        }
-        score = Math.max(0, Math.min(10, Number(score) || 0));
-
-        // Find findings — support both `findings` array and legacy {issues, warnings, positives}
-        let findings = [];
-        if (Array.isArray(data?.findings) && data.findings.length) {
-          findings = data.findings;
-        } else {
-          findings = [
-            ...(data?.issues || []).map(t => ({ type: "issue", text: t })),
-            ...(data?.warnings || []).map(t => ({ type: "warn", text: t })),
-            ...(data?.positives || []).map(t => ({ type: "good", text: t }))
-          ];
-        }
-
+        const score = Math.max(0, Math.min(10, Number(data?.score) || 0));
         return {
           score,
           verdict: data?.verdict || (score >= 7 ? "High risk detected" : score >= 4 ? "Suspicious content" : "Low risk detected"),
-          summary: data?.summary || "The analysis completed.",
-          findings,
-          extracted_text: data?.extracted_text || data?.scanned_text || this.lastInput || ""
+          summary: data?.summary || "The analysis completed, but no additional summary was returned.",
+          findings: Array.isArray(data?.findings) ? data.findings : [],
+          extracted_text: data?.extracted_text || this.lastInput || ""
         };
       },
 
       getOfflineResult() {
         const value = this.activeTab === "text" ? this.$("#textInput").value : this.lastInput;
-        const lower = String(value || "").toLowerCase();
+        const lower = String(value).toLowerCase();
 
         const scamSignals = [
           /urgent|immediately|within \d+ (hour|hours|minute|minutes)/,
@@ -3325,7 +2553,8 @@
 
         if (score >= 7) {
           return {
-            score, verdict: "High risk — likely scam",
+            score,
+            verdict: "High risk — likely scam",
             summary: "This content combines multiple social-engineering signals such as urgency, pressure, suspicious links or requests for money. Treat it as unsafe until independently verified.",
             findings: [
               { type: "issue", text: "Pressure language detected: the message pushes for immediate action." },
@@ -3335,9 +2564,11 @@
             extracted_text: value || "No text preview available."
           };
         }
+
         if (score >= 4) {
           return {
-            score, verdict: "Needs manual verification",
+            score,
+            verdict: "Needs manual verification",
             summary: "Some signals are unusual enough to deserve a second look. Do not use links or contact details supplied by the message until the sender is independently confirmed.",
             findings: [
               { type: "warn", text: "The message contains cues that can be associated with impersonation or urgency." },
@@ -3346,8 +2577,10 @@
             extracted_text: value || "No text preview available."
           };
         }
+
         return {
-          score, verdict: "Low risk — no strong red flags",
+          score,
+          verdict: "Low risk — no strong red flags",
           summary: "No major scam patterns were detected by the local demo rules. That does not prove the message is authentic, so verify important requests through official channels.",
           findings: [
             { type: "good", text: "No strong urgency or threat pattern was detected." },
@@ -3358,14 +2591,12 @@
       },
 
       renderResults(data, isDemo) {
-        LOG("renderResults:", data.verdict, "| score:", data.score, "| demo:", isDemo);
         this.lastData = data;
         const score = data.score;
         const status = score >= 7 ? "danger" : score >= 4 ? "warning" : "safe";
         const badge = status === "danger" ? "High risk" : status === "warning" ? "Suspicious" : "Verified low risk";
 
         const card = this.$("#resultCard");
-        if (!card) { ERR("resultCard not found"); return; }
         card.className = `result-top status-${status}`;
         this.$("#resBadgeText").textContent = badge;
         this.$("#resBadgeIcon").innerHTML = ICONS[status === "safe" ? "safe" : status === "warning" ? "warn" : "danger"];
@@ -3376,15 +2607,13 @@
         const number = this.$("#resScore");
         const circumference = 2 * Math.PI * 60;
         const offset = circumference * (1 - score / 10);
-        if (fill) {
-          fill.style.strokeDasharray = circumference.toFixed(2);
-          fill.style.strokeDashoffset = circumference.toFixed(2);
-        }
-        if (number) number.textContent = "0";
+        fill.style.strokeDasharray = circumference.toFixed(2);
+        fill.style.strokeDashoffset = circumference.toFixed(2);
+        number.textContent = "0";
 
         setTimeout(() => {
-          if (fill) fill.style.strokeDashoffset = offset.toFixed(2);
-          if (number) this.animateNumber(number, score);
+          fill.style.strokeDashoffset = offset.toFixed(2);
+          this.animateNumber(number, score);
         }, 50);
 
         const findings = this.$("#resFindings");
@@ -3395,7 +2624,7 @@
           const type = ["issue", "warn", "good"].includes(item.type) ? item.type : "good";
           const row = document.createElement("div");
           row.className = `finding ${type}`;
-          row.innerHTML = `<div class="finding-icon">${ICONS[type === "issue" ? "danger" : type]}</div><div class="finding-text"></div>`;
+          row.innerHTML = `<div class="finding-icon">${ICONS[type === "issue" ? "danger" : type === "good" ? "safe" : type]}</div><div class="finding-text"></div>`;
           row.querySelector(".finding-text").textContent = item.text || "No description provided.";
           findings.appendChild(row);
         });
@@ -3412,12 +2641,7 @@
         this.$("#results").classList.add("on");
         this.saveHistory(data, status, isDemo);
 
-        setTimeout(() => {
-          const res = this.$("#results");
-          if (res && res.classList.contains("on")) {
-            res.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        }, 120);
+        setTimeout(() => this.$("#results").scrollIntoView({ behavior: "smooth", block: "start" }), 70);
       },
 
       animateNumber(node, end) {
@@ -3433,8 +2657,7 @@
       },
 
       hideResults() {
-        const r = this.$("#results");
-        if (r) r.classList.remove("on");
+        this.$("#results").classList.remove("on");
       },
 
       copyResult() {
@@ -3457,15 +2680,12 @@
 
       bindHistory() {
         const drawer = this.$("#historyDrawer");
-        const btn = this.$("#historyBtn");
-        if (!btn || !drawer) return;
-        btn.addEventListener("click", () => {
+        this.$("#historyBtn").addEventListener("click", () => {
           drawer.classList.add("on");
           drawer.setAttribute("aria-hidden", "false");
           this.renderHistory();
         });
-        const closeBtn = this.$("#closeHistory");
-        if (closeBtn) closeBtn.addEventListener("click", () => this.closeHistory());
+        this.$("#closeHistory").addEventListener("click", () => this.closeHistory());
         drawer.addEventListener("click", e => {
           if (e.target === drawer) this.closeHistory();
         });
@@ -3473,39 +2693,35 @@
 
       closeHistory() {
         const drawer = this.$("#historyDrawer");
-        if (drawer) {
-          drawer.classList.remove("on");
-          drawer.setAttribute("aria-hidden", "true");
-        }
+        drawer.classList.remove("on");
+        drawer.setAttribute("aria-hidden", "true");
       },
 
       getHistory() {
         try { return JSON.parse(localStorage.getItem(this.historyKey) || "[]"); }
-        catch (e) { return []; }
+        catch { return []; }
       },
 
       saveHistory(data, status, demo) {
-        try {
-          const history = this.getHistory();
-          history.unshift({
-            id: Date.now(),
-            score: data.score,
-            verdict: data.verdict,
-            summary: data.summary,
-            findings: data.findings || [],
-            extracted_text: data.extracted_text || "",
-            input: this.lastInput,
-            status, demo,
-            at: new Date().toISOString()
-          });
-          localStorage.setItem(this.historyKey, JSON.stringify(history.slice(0, 8)));
-          this.renderHistory();
-        } catch (e) { ERR("saveHistory failed:", e); }
+        const history = this.getHistory();
+        history.unshift({
+          id: Date.now(),
+          score: data.score,
+          verdict: data.verdict,
+          summary: data.summary,
+          findings: data.findings || [],
+          extracted_text: data.extracted_text || "",
+          input: this.lastInput,
+          status,
+          demo,
+          at: new Date().toISOString()
+        });
+        localStorage.setItem(this.historyKey, JSON.stringify(history.slice(0, 8)));
+        this.renderHistory();
       },
 
       renderHistory() {
         const list = this.$("#historyList");
-        if (!list) return;
         const history = this.getHistory();
         if (!history.length) {
           list.innerHTML = `<div class="empty-state">No analyses yet.<br>Run a scan and your recent results will appear here on this device.</div>`;
@@ -3533,28 +2749,108 @@
       openHistory(id) {
         const item = this.getHistory().find(x => x.id === id);
         if (!item) return;
-        Router.go("scan");
         this.lastData = item;
         this.lastInput = item.input || item.extracted_text || "";
-        setTimeout(() => this.renderResults(item, item.demo), 80);
+        this.renderResults(item, item.demo);
         this.closeHistory();
+      },
+
+      /* --- Chatbot Logic --- */
+      bindChatbot() {
+        const toggle = this.$("#chatbotToggle");
+        const window = this.$("#chatbotWindow");
+        const close = this.$("#chatbotClose");
+        const send = this.$("#chatbotSend");
+        const input = this.$("#chatbotInput");
+
+        toggle.addEventListener("click", () => {
+          window.classList.toggle("on");
+          if (window.classList.contains("on")) input.focus();
+        });
+
+        close.addEventListener("click", () => window.classList.remove("on"));
+
+        send.addEventListener("click", () => this.sendChatMessage());
+        input.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") this.sendChatMessage();
+        });
+      },
+
+      async sendChatMessage() {
+        const input = this.$("#chatbotInput");
+        const msg = input.value.trim();
+        if (!msg) return;
+
+        this.addChatMessage("user", msg);
+        input.value = "";
+
+        // Add a temporary "typing" indicator
+        const typingId = "typing-" + Date.now();
+        this.addChatMessage("bot", "Thinking...", typingId);
+
+        try {
+          // Attempt to connect to the backend chat endpoint
+          // If the backend doesn't have /api/chat, it will fallback to a local response
+          const res = await fetch(`${BACKEND_URL}/api/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: msg })
+          });
+
+          if (!res.ok) throw new Error("Chat API unavailable");
+          const data = await res.json();
+
+          this.removeChatMessage(typingId);
+          this.addChatMessage("bot", data.reply || data.response || "I'm here to help with your verification needs.");
+        } catch (err) {
+          // Local fallback logic
+          this.removeChatMessage(typingId);
+          setTimeout(() => {
+            let reply = "I'm currently running in local demo mode. ";
+            const lower = msg.toLowerCase();
+            if (lower.includes("scam") || lower.includes("fraud") || lower.includes("risk")) {
+              reply += "If you received a suspicious message, try pasting it into the 'Paste text' tab and clicking 'Analyze now'. I'll scan it for urgency, threats, and suspicious links.";
+            } else if (lower.includes("safe") || lower.includes("verify")) {
+              reply += "To verify a document or message, you can upload a PDF or image in the 'Upload file' tab. I'll extract the text and check for structural oddities.";
+            } else if (lower.includes("hello") || lower.includes("hi")) {
+              reply = "Hello! How can I help you today? You can ask me about online safety, how to spot scams, or how to use CivicShield.";
+            } else {
+              reply += "For detailed analysis, please use the main scanner tool above. I can guide you on what to look out for, such as urgency, payment requests, and lookalike domains.";
+            }
+            this.addChatMessage("bot", reply);
+          }, 800);
+        }
+      },
+
+      addChatMessage(sender, text, id = null) {
+        const container = this.$("#chatbotMessages");
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `chat-msg ${sender}`;
+        msgDiv.textContent = text;
+        if (id) msgDiv.id = id;
+        container.appendChild(msgDiv);
+        container.scrollTop = container.scrollHeight;
+      },
+
+      removeChatMessage(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
       },
 
       bindGlobalShortcuts() {
         document.addEventListener("keydown", e => {
-          try {
-            if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === "o") {
-              e.preventDefault();
-              this.$("#fileInput").click();
-            }
-            if (e.key === "Escape") this.closeHistory();
-          } catch (_) { }
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
+            e.preventDefault();
+            this.$("#fileInput").click();
+          }
+          if (e.key === "Escape") {
+            this.closeHistory();
+            this.$("#chatbotWindow").classList.remove("on");
+          }
         });
       },
 
       toast(message, type = "info") {
-        const container = this.$("#toastContainer");
-        if (!container) return;
         const node = document.createElement("div");
         node.className = "toast";
         node.innerHTML = `
@@ -3565,7 +2861,7 @@
           </button>
         `;
         node.querySelector(".toast-message").textContent = message;
-        container.appendChild(node);
+        this.$("#toastContainer").appendChild(node);
 
         const close = () => {
           node.classList.add("out");
@@ -3584,7 +2880,7 @@
       formatHistoryDate(date) {
         try {
           return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(date));
-        } catch (e) { return "Recent"; }
+        } catch { return "Recent"; }
       },
 
       escapeHtml(value) {
@@ -3594,245 +2890,7 @@
       }
     };
 
-    /* ══════════════════════════════════════════════════
-       AI ASSISTANT
-       ══════════════════════════════════════════════════ */
-    const Chat = {
-      isOpen: false,
-      busy: false,
-      history: [],
-
-      KB: [
-        {
-          test: /(explain|summar|what did|result|last scan|previous scan)/i,
-          reply: () => {
-            const d = App.lastData;
-            if (!d) return "You haven't run a scan yet. Paste a suspicious message or drop a document above and hit *Analyze now* — I'll explain the verdict here.";
-            const findings = (d.findings || []).map(f => `• ${f.text}`).join("\n");
-            return `Your most recent scan came back as **${d.verdict}** with a risk score of **${d.score}/10**.\n\n${d.summary}\n\nKey signals:\n${findings || "• No specific signals were returned."}\n\nWant me to suggest next steps?`;
-          }
-        },
-        {
-          test: /(report|complain|complaint|1930|cybercrime|police|file a case)/i,
-          reply: "To report a cyber fraud in India:\n\n• **Financial fraud (money already sent):** Call the national helpline **1930** immediately.\n• **Online portal:** File a formal complaint at **cybercrime.gov.in**.\n• **CERT-In:** For hacking, phishing infrastructure, or malware: **cert-in.org.in**.\n• **Your bank:** Call the number on the back of your card, not any number from the suspicious message.\n\nSave screenshots, transaction IDs, and sender details before you file."
-        },
-        {
-          test: /(kyc|aadhaar|aadhar|pan|block|suspend|deactivat)/i,
-          reply: "KYC/Aadhaar/PAN 'block' messages are one of the most common Indian scams.\n\n**Real government agencies do NOT:**\n• Ask you to click a link to 'verify' or 're-activate'\n• Demand immediate payment to avoid blocking\n• Send SMS from personal mobile numbers\n\n**What to do:**\n1. Ignore the link completely.\n2. Check your actual status only on the official portal (uidai.gov.in, incometax.gov.in, or your bank's app).\n3. Report the message to 1930 or cybercrime.gov.in."
-        },
-        {
-          test: /(upi|payment|paytm|phonepe|gpay|google pay|money transfer|refund|collect request)/i,
-          reply: "UPI fraud usually begins one of three ways: a **collect request**, a **fake cashback link**, or a **QR code** shared for 'receiving' money.\n\nGolden rules:\n• You **never** enter a UPI PIN to *receive* money — only to send it.\n• A UPI PIN prompt always means money is leaving your account.\n• Never approve a collect request you didn't create.\n• QR codes are for paying — not for receiving.\n\nIf money was already debited: call **1930** within minutes and inform your bank."
-        },
-        {
-          test: /(gov\.in|domain|url|link|verify.*domain|website)/i,
-          reply: "To verify a government link safely:\n\n1. The domain must end in **.gov.in** or **.nic.in**.\n2. Look at the part *immediately before* .gov.in — scammers use things like `incometax-verify-india.com` or `gov-in.co` to look real.\n3. Real government sites use **HTTPS** with a valid certificate.\n4. When in doubt, don't click the link. Type the official domain manually into your browser."
-        },
-        {
-          test: /(income tax|it department|itr|tax notice|refund)/i,
-          reply: "Income Tax Department messages almost always follow a formal structure and use the official domain **incometax.gov.in**.\n\nRed flags:\n• A penalty amount demanded via a link or UPI\n• Threats of 'arrest' or 'legal action within 24 hours'\n• Shortened or lookalike domains\n• Requests for OTP, CVV, or card PIN\n\nThe IT Department never asks for payment through SMS links."
-        },
-        {
-          test: /(lottery|prize|winner|kbc|jackpot|lucky draw)/i,
-          reply: "Lottery and prize scams are almost always fake if you didn't enter the draw.\n\nSignals to watch:\n• A 'processing fee' or 'tax' to release a prize\n• A WhatsApp or SMS notification from an unknown number\n• Urgency — 'claim within 24 hours'\n• Requests for bank details or Aadhaar\n\nReal prizes don't require you to pay first."
-        },
-        {
-          test: /(job|offer letter|work from home|hiring|interview fee|registration fee)/i,
-          reply: "Job scams in India commonly target freshers with 'work from home' offers.\n\nRed flags:\n• Any fee for registration, training, or 'security deposit'\n• Interviews conducted entirely over Telegram or WhatsApp\n• Offers that arrive without you applying\n• Fake offer letters with the wrong company logo or email domain"
-        },
-        {
-          test: /(electricity|power bill|bijli|kseb|bses|tata power|discom)/i,
-          reply: "Electricity bill scams usually say your power will be disconnected tonight unless you pay via a link.\n\nReal discoms:\n• Never send a payment link over SMS\n• Never ask you to install a 'bill viewing' APK\n• Use their official app or website only\n\nIf you're unsure, look up your electricity board's official number and call them directly."
-        },
-        {
-          test: /(team|who (built|made)|about (you|the team)|naishal|krish|pranav|diya|ansh)/i,
-          reply: "CivicShield was built by a 5-member team:\n\n• **Naishal Nadiya** — Lead Full-Stack Developer & Architect\n• **Krish** — Conversational AI & Chatbot\n• **Pranav** — Backend File Processing\n• **Diya** — Heuristic Engine & Scoring\n• **Ansh** — Frontend Fine-Tuning & QA\n\nSee the **About** page for details."
-        },
-        {
-          test: /(what can you do|help|capabilities|who are you|what are you)/i,
-          reply: "I'm the CivicShield assistant. I can help you with:\n\n• **Explaining a scan result** — ask 'explain my last scan'\n• **Spotting scam patterns** — UPI, KYC, tax, lottery, jobs\n• **Verifying domains** — how to check .gov.in vs lookalikes\n• **Reporting** — how to file with 1930 or cybercrime.gov.in\n• **The team** — ask 'who built this'"
-        },
-        {
-          test: /(hi|hello|hey|namaste|good (morning|evening|afternoon)|yo)/i,
-          reply: "Hello. What would you like to check today?\n\nI can analyse a suspicious message, explain a scan result, or guide you through official reporting."
-        },
-        {
-          test: /(thanks|thank you|thankyou|ok thanks|got it|cheers)/i,
-          reply: "Happy to help. If anything else looks suspicious, run it through the scanner above or ask me directly — I'm right here."
-        }
-      ],
-
-      init() {
-        this.toggle = document.getElementById("chatToggle");
-        this.windowEl = document.getElementById("chatWindow");
-        this.closeBtn = document.getElementById("chatClose");
-        this.input = document.getElementById("chatInput");
-        this.sendBtn = document.getElementById("chatSend");
-        this.body = document.getElementById("chatBody");
-        this.chips = document.getElementById("chatChips");
-
-        if (!this.toggle || !this.windowEl) { ERR("Chat widget elements missing"); return; }
-
-        this.toggle.addEventListener("click", () => this.toggleOpen());
-        if (this.closeBtn) this.closeBtn.addEventListener("click", () => this.toggleOpen(false));
-        if (this.sendBtn) this.sendBtn.addEventListener("click", () => this.submit());
-        if (this.input) {
-          this.input.addEventListener("keydown", e => {
-            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.submit(); }
-          });
-        }
-
-        if (this.chips) {
-          this.chips.querySelectorAll(".chat-chip").forEach(chip => {
-            chip.addEventListener("click", () => {
-              this.input.value = chip.dataset.chip || chip.textContent;
-              this.submit();
-            });
-          });
-        }
-
-        document.addEventListener("keydown", e => {
-          if (e.key === "Escape" && this.isOpen) this.toggleOpen(false);
-        });
-      },
-
-      toggleOpen(force) {
-        const next = typeof force === "boolean" ? force : !this.isOpen;
-        this.isOpen = next;
-        this.windowEl.classList.toggle("open", next);
-        this.toggle.classList.toggle("active", next);
-        if (next) {
-          const ping = this.toggle.querySelector(".ping");
-          if (ping) ping.style.display = "none";
-          setTimeout(() => this.input.focus(), 320);
-        }
-      },
-
-      async submit() {
-        const text = this.input.value.trim();
-        if (!text || this.busy) return;
-        this.input.value = "";
-        this.appendUser(text);
-        this.history.push({ role: "user", content: text });
-
-        const typingId = this.appendTyping();
-        this.busy = true;
-        this.sendBtn.disabled = true;
-
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 25000);
-
-          const res = await fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: text, history: this.history.slice(-6) }),
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
-
-          if (!res.ok) throw new Error("chat api offline");
-          const data = await res.json();
-          const reply = data?.reply || data?.message;
-          if (!reply) throw new Error("empty reply");
-          this.removeTyping(typingId);
-          this.appendBot(reply);
-          this.history.push({ role: "model", content: reply });
-        } catch (e) {
-          LOG("Chat fetch failed, using local KB:", e.message);
-          await new Promise(r => setTimeout(r, 350));
-          this.removeTyping(typingId);
-          const reply = this.localReply(text);
-          this.appendBot(reply);
-          this.history.push({ role: "model", content: reply });
-        } finally {
-          this.busy = false;
-          this.sendBtn.disabled = false;
-        }
-      },
-
-      localReply(text) {
-        for (const rule of this.KB) {
-          if (rule.test.test(text)) {
-            return typeof rule.reply === "function" ? rule.reply() : rule.reply;
-          }
-        }
-        return "I don't have a specific answer for that yet, but here's how I can help:\n\n• Paste a suspicious message into the scanner → I can explain the verdict\n• Ask 'explain my last scan' → I'll break down the findings\n• Ask 'how do I report a scam' → I'll walk you through 1930 and cybercrime.gov.in\n• Ask about a specific scam type (KYC, UPI, tax, lottery, job, electricity)\n• Ask 'who built this' → I'll introduce the team";
-      },
-
-      appendUser(text) {
-        const el = document.createElement("div");
-        el.className = "chat-msg user";
-        el.textContent = text;
-        this.body.appendChild(el);
-        this.scroll();
-      },
-
-      appendBot(text) {
-        const el = document.createElement("div");
-        el.className = "chat-msg bot";
-        el.textContent = this.pretty(text);
-        this.body.appendChild(el);
-        this.scroll();
-      },
-
-      appendTyping() {
-        const id = "typing-" + Date.now();
-        const el = document.createElement("div");
-        el.id = id;
-        el.className = "chat-msg typing";
-        el.innerHTML = "<i></i><i></i><i></i>";
-        this.body.appendChild(el);
-        this.scroll();
-        return id;
-      },
-
-      removeTyping(id) {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-      },
-
-      pretty(text) {
-        return String(text).replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1");
-      },
-
-      scroll() {
-        requestAnimationFrame(() => {
-          this.body.scrollTop = this.body.scrollHeight;
-        });
-      }
-    };
-
-    /* ══════════════════════════════════════════════════
-       BOOT
-       ══════════════════════════════════════════════════ */
-    function boot() {
-      LOG("DOMContentLoaded — booting app");
-      try { Router.init(); } catch (e) { ERR("Router.init failed:", e); }
-      try { App.init(); } catch (e) { ERR("App.init failed:", e); console.warn("[CivicShield] App initialisation error — scan button may use fallback handler.", e.message); }
-      try { Chat.init(); } catch (e) { ERR("Chat.init failed:", e); }
-      LOG("Boot complete");
-    }
-
-    // SAFETY NET: Even if App.init() completely fails,
-    // this top-level delegated handler ensures the Analyze button works.
-    document.addEventListener("click", (e) => {
-      const scanTarget = e.target.closest("#scanBtn");
-      if (scanTarget) {
-        // Only fire if App hasn't already handled this click
-        // (App's handler uses stopPropagation, so if it fired, we won't reach here)
-        if (typeof App !== "undefined" && typeof App.scan === "function" && !App.scanning) {
-          LOG("Top-level safety net: calling App.scan()");
-          App.scan();
-        }
-      }
-    });
-
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot);
-    } else {
-      boot();
-    }
+    window.addEventListener("DOMContentLoaded", () => App.init());
   </script>
 </body>
 
