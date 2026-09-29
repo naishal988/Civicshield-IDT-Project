@@ -3229,13 +3229,33 @@
             btn.classList.add("loading");
             btn.disabled = true;
           }
+          let result;
+          try {
+            const formData = new FormData();
+            if (this.activeTab === "text") {
+              formData.append("text", value);
+            } else {
+              formData.append("file", this.file);
+            }
 
-          // Always perform local analysis first
-          const result = this.getOfflineResult();
+            const response = await fetch("/api/scan", {
+              method: "POST",
+              body: formData
+            });
 
-          await new Promise(resolve => setTimeout(resolve, 700));
+            if (!response.ok) {
+              const err = await response.json().catch(() => ({}));
+              throw new Error(err.error || "Server error");
+            }
 
-          this.renderResults(result, true);
+            const data = await response.json();
+            result = this.normalizeData(data);
+          } catch (e) {
+            console.warn("API scan failed, falling back to offline", e);
+            result = this.getOfflineResult();
+          }
+
+          this.renderResults(result, false);
           this.toast("Analysis complete.", "success");
 
         } catch (err) {
