@@ -453,18 +453,12 @@ RAW_DOMAIN_PATTERN = re.compile(r"\b([a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,
 UPI_HANDLE_PATTERN = re.compile(r"\b[a-zA-Z0-9.\-_]{2,50}@(okhdfcbank|okaxis|oksbi|okicici|ybl|paytm|upi|axl|ibl|barodampay|federal|idfcbank|freecharge|airtel)\b", re.IGNORECASE)
 GENERAL_UPI_PATTERN = re.compile(r"\b[a-zA-Z0-9.\-_]{3,50}@[a-zA-Z]{2,24}\b", re.IGNORECASE)
 
-def inspect_domains_and_urls(text: str) -> tuple[list[str], list[str], list[dict], float]:
+def classify_urls(text: str) -> tuple[list[str], list[str]]:
     """
-    Forensically dissect all URLs and lookalike domain patterns in the text.
-    Returns: (official_urls, fake_urls, domain_findings, url_risk_points)
+    Extracts and classifies URLs from text into official government URLs and fake/non-government URLs.
+    Handles bare domain strings and IP address formats.
     """
-    official_urls = []
-    fake_urls = []
-    findings = []
-    url_risk_points = 0.0
-
     urls = URL_PATTERN.findall(text)
-    # Check for bare domain or IP address strings in text (e.g., 'phishtank.icu/login' or '192.168.1.1')
     raw_candidates = re.findall(
         r"\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?:/[^\s<>\"')]*)?|\b(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?(?:/[^\s<>\"')]*)?",
         text,
@@ -475,6 +469,8 @@ def inspect_domains_and_urls(text: str) -> tuple[list[str], list[str], list[dict
         if full not in urls:
             urls.append(full)
 
+    official_urls = []
+    fake_urls = []
     checked_hosts = set()
 
     for url in urls:
@@ -484,64 +480,21 @@ def inspect_domains_and_urls(text: str) -> tuple[list[str], list[str], list[dict
         except Exception:
             continue
 
+        if not host:
+            host_match = re.search(r"https?://([^/\s:]+)", url)
+            host = host_match.group(1).lower().strip(".") if host_match else ""
+
         if not host or host in checked_hosts:
             continue
         checked_hosts.add(host)
 
         is_official = host in OFFICIAL_EXACT or host.endswith(OFFICIAL_SUFFIXES)
-
         if is_official:
             official_urls.append(url)
-            continue
-
-        fake_urls.append(url)
-
-        # 1. Numeric IP address host validation
-        if IPV4_REGEX.match(host):
-            findings.append({
-                "type": "issue",
-                "severity": "critical",
-                "text": f"High-risk phishing indicator: Raw numeric IP host identified '{host}'. Direct IP links bypass DNS security and indicate rogue phishing infrastructure."
-            })
-            url_risk_points = max(url_risk_points, 7.5)
-
-        # 2. High-risk phishing TLDs (.icu, .top, .xyz, etc.)
-        elif any(host.endswith(tld) for tld in SUSPICIOUS_TLDS):
-            findings.append({
-                "type": "issue",
-                "severity": "critical",
-                "text": f"High-risk phishing indicator: Suspicious top-level domain flagged for '{host}'. This TLD ({host.split('.')[-1]}) is heavily abused for disposable phishing infrastructure."
-            })
-            url_risk_points = max(url_risk_points, 7.5)
-
-        # 3. URL Shortener detection
-        elif host in URL_SHORTENERS:
-            findings.append({
-                "type": "issue",
-                "severity": "high",
-                "text": f"URL shortener '{host}' detected ({url}). Official government agencies never distribute legal notices or summons via masking shorteners."
-            })
-            url_risk_points = max(url_risk_points, 7.5)
-
-        # 4. Lookalike / Typosquatting Government Domain Check
         else:
-            matched_brands = [b for b in GOV_BRAND_TOKENS if b in host]
-            if matched_brands:
-                findings.append({
-                    "type": "issue",
-                    "severity": "critical",
-                    "text": f"Spoofed / Typosquatted government domain: '{host}' mimics official services ({', '.join(matched_brands[:3])}) but is NOT hosted under .gov.in or .nic.in."
-                })
-                url_risk_points = max(url_risk_points, 7.5)
-            else:
-                findings.append({
-                    "type": "warn",
-                    "severity": "medium",
-                    "text": f"Non-government domain: '{host}'. Legitimate Indian government portals must terminate in .gov.in or .nic.in."
-                })
-                url_risk_points = max(url_risk_points, 4.5)
+            fake_urls.append(url)
 
-    return official_urls, fake_urls, findings, url_risk_points
+    return official_urls, fake_urls
 
 def inspect_upi_handles(text: str) -> list[dict]:
     """Detect presence of personal UPI VPAs inside purported legal/gov communications."""
@@ -587,11 +540,45 @@ def _run_ai_analysis(text: str, filename: str | None) -> dict:
             risk_points += weight
 
     # 2. URL & Domain Forensics
-    official_urls, fake_urls, domain_findings, url_risk_points = inspect_domains_and_urls(text_clean)
-    findings.extend(domain_findings)
+    SUSPICIOUS_TLDS = (".icu", ".top", ".xyz", ".club", ".buzz", ".work", ".tk", ".ml", ".ga", ".cf", ".gq")
+
+    official_urls, fake_urls = classify_urls(text_clean)
+
+    url_risk_points = 0.0
     if fake_urls:
         detected_tags.append("suspicious_urls")
-        risk_points += url_risk_points
+        first_url = fake_urls[0]
+
+        # Hostname safely extract karo aur lowercase karo
+        parsed_host = (urlparse(first_url).hostname or "").lower().strip()
+
+        # Agar hostname direct nahi mila (jaise protocol missing ho), regex se domain nikalo
+        if not parsed_host:
+            host_match = re.search(r"https?://([^/\s:]+)", first_url)
+            parsed_host = host_match.group(1).lower() if host_match else ""
+
+        is_suspicious_tld = any(parsed_host.endswith(tld) for tld in SUSPICIOUS_TLDS)
+        is_ip_address = bool(re.match(r"^\d{1,3}(\.\d{1,3}){3}$", parsed_host))
+
+        if is_suspicious_tld or is_ip_address:
+            findings.append({
+                "type": "issue",
+                "severity": "critical",
+                "text": f"High-risk phishing infrastructure detected: '{first_url}'. "
+                        "Uncommon TLD or numeric IP address commonly associated with malicious campaigns."
+            })
+            risk_points += 8.0  # Seedha high-risk trigger karega (Score >= 8.0)
+            url_risk_points = 8.0
+        else:
+            findings.append({
+                "type": "issue",
+                "severity": "medium",
+                "text": f"Suspicious or non-government URL identified: '{first_url}'. "
+                        "Valid Indian government domains must end in .gov.in or .nic.in."
+            })
+            risk_points += 4.5
+            url_risk_points = 4.5
+
     if official_urls:
         findings.append({
             "type": "good",
@@ -655,8 +642,8 @@ def _run_ai_analysis(text: str, filename: str | None) -> dict:
 
     # Calculate calibrated risk score (0.0 to 10.0)
     base_risk = risk_points - (trust_points * 0.4)
-    if url_risk_points >= 7.5:
-        risk = max(7.5, min(10.0, base_risk))
+    if url_risk_points >= 8.0:
+        risk = max(8.0, min(10.0, base_risk))
     elif url_risk_points >= 4.5:
         risk = max(4.5, min(10.0, base_risk))
     else:
