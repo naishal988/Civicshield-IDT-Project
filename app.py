@@ -406,7 +406,7 @@ THREAT_CATEGORIES = [
     (
         "urgent_financial_coercion",
         "Urgent Financial Coercion & Fake Fine",
-        r"\b(pay\s*now\s*to\s*avoid\s*arrest|penalty\s*of\s*rs|fine\s*of\s*rs|bail\s*amount|security\s*deposit|immediate\s*penalty|pay\s*fine\s*within|transfer\s*funds\s*to\s*(rbi|safe|clearing|supervision)|freeze\s*all\s*(bank\s*)?accounts)\b",
+        r"\b(pay\s*(now\s*to\s*avoid\s*arrest|penalty|fine)|penalty\s*(of\s*rs)?|fine\s*of\s*rs|bail\s*amount|security\s*deposit|immediate\s*penalty|pay\s*fine\s*within|transfer\s*funds\s*to\s*(rbi|safe|clearing|supervision)|freeze\s*all\s*(bank\s*)?accounts)\b",
         3.8,
         "Government authorities never request payments to 'safe custody' or 'RBI verification' accounts."
     ),
@@ -640,38 +640,87 @@ def _run_ai_analysis(text: str, filename: str | None) -> dict:
         })
         trust_points += 1.0
 
-    # Calculate calibrated risk score (0.0 to 10.0)
-    base_risk = risk_points - (trust_points * 0.4)
-    if url_risk_points >= 8.0:
-        risk = max(8.0, min(10.0, base_risk))
-    elif url_risk_points >= 4.5:
-        risk = max(4.5, min(10.0, base_risk))
+    # ---------------------------------------------------------------------
+    # 1-to-10 Deterministic Risk Calibration Matrix
+    # ---------------------------------------------------------------------
+    has_arrest_threat = any(t in detected_tags for t in ["digital_arrest", "fake_legal_coercion", "narcotics_courier_trap"])
+    has_extortion_or_upi = any(t in detected_tags for t in ["urgent_financial_coercion", "upi_payment_trap", "crypto_giftcard_trap"])
+    has_urgency = any(t in detected_tags for t in ["coercive_deadline", "utility_kyc_bait"])
+    is_phishing_infra = (url_risk_points >= 8.0)
+    is_non_gov_domain = (url_risk_points >= 4.5 and not is_phishing_infra)
+    has_official_url = bool(official_urls and not fake_urls)
+    has_ref_syntax = bool(re.search(r"\b(ref(?:erence)?\s*(?:no|number)[.:]?\s*[A-Z0-9/\-_]{5,30}|fir\s*no[.:]?\s*\d+/\d{4})\b", text_clean, re.IGNORECASE))
+
+    # Tier 10: Malicious TLD / IP + legal arrest threat + wire/UPI transfer extortion
+    if is_phishing_infra and has_arrest_threat and has_extortion_or_upi:
+        risk = 10.0
+    # Tier 9: Malicious TLD / IP + legal arrest threat + impersonation
+    elif is_phishing_infra and (has_arrest_threat or has_extortion_or_upi):
+        risk = 9.0
+    # Tier 8: Malicious / Disposable TLDs or raw IP address URLs
+    elif is_phishing_infra:
+        risk = 8.0
+    # Text-only severe threats (no URL present)
+    elif not fake_urls and has_arrest_threat and has_extortion_or_upi:
+        risk = 10.0
+    elif not fake_urls and has_arrest_threat:
+        risk = 9.0
+    # Tier 7: Multiple coercive keywords (urgent demand + penalty/fine) + non-gov link
+    elif is_non_gov_domain and has_extortion_or_upi and has_urgency:
+        risk = 7.0
+    elif is_non_gov_domain and (has_arrest_threat or has_extortion_or_upi):
+        risk = 7.0
+    # Tier 5-6: Unverified domain + single soft urgency marker
+    elif is_non_gov_domain and has_urgency:
+        risk = 5.5
+    # Tier 4: Unverified third-party generic domains (.org, .com, .net)
+    elif is_non_gov_domain:
+        risk = 4.5
+    # Plain text with coercion (no URLs)
+    elif not fake_urls and not has_official_url and (has_extortion_or_upi or (has_urgency and len(detected_tags) >= 2)):
+        risk = 7.0
+    elif not fake_urls and not has_official_url and has_urgency:
+        risk = 5.0
+    # Tier 1-2: Official .gov.in / .nic.in
+    elif has_official_url and not detected_tags:
+        risk = 1.0 if has_ref_syntax else 2.0
+    # Tier 3: Clean, benign URLs/texts without threat keywords
+    elif not detected_tags and not fake_urls:
+        risk = 3.0
     else:
-        risk = max(0.0, min(10.0, base_risk))
+        # Fallback to calibrated base risk if combination is novel
+        base_risk = risk_points - (trust_points * 0.4)
+        risk = max(1.0, min(10.0, base_risk))
 
     # Categorize Verdict
-    if risk >= 6.0:
+    if risk >= 8.0:
+        verdict = "CRITICAL THREAT — LIKELY SCAM"
+        verdict_code = "danger"
+        summary = (
+            "CRITICAL THREAT SIGNALS DETECTED. Disposable phishing infrastructure, impersonation, "
+            "or extortion vectors identified. Do NOT transfer funds, install applications, or click links. "
+            "Report immediately to National Cyber Crime Helpline 1930."
+        )
+    elif risk >= 6.0:
         verdict = "HIGH RISK — LIKELY SCAM"
         verdict_code = "danger"
         summary = (
-            "CRITICAL THREAT SIGNALS DETECTED. This communication exhibits high-confidence "
-            "indicators of government impersonation, digital arrest extortion, or lookalike phishing. "
-            "Do NOT transfer money, install applications, or click links. Report immediately to 1930."
+            "HIGH-CONFIDENCE THREAT MARKERS IDENTIFIED. Multiple coercive indicators (urgent demands, "
+            "penalties, or non-government links) were detected. Verify independently before proceeding."
         )
-    elif risk >= 3.0:
+    elif risk >= 4.0:
         verdict = "SUSPICIOUS — USE CAUTION"
         verdict_code = "warning"
         summary = (
-            "SECURITY ANOMALIES OBSERVED. One or more suspicious markers (coercive language, "
-            "non-government links, or artificial urgency) were identified. Verify independently "
-            "through official public portals before taking any action."
+            "SECURITY ANOMALIES OBSERVED. Unverified third-party domains or soft urgency patterns "
+            "detected. Verify the authenticity through official public directories before taking any action."
         )
     else:
         verdict = "LIKELY LEGITIMATE"
         verdict_code = "safe"
         summary = (
-            "NO CRITICAL THREAT MARKERS DETECTED. The communication does not exhibit coercive extortion, "
-            "fraudulent payment requests, or typosquatted links. Always cross-reference with official portals."
+            "NO CRITICAL THREAT MARKERS DETECTED. Official government verification or clean benign text "
+            "identified. General communication appears safe and non-coercive."
         )
 
     issues    = [f["text"] for f in findings if f["type"] == "issue"]
