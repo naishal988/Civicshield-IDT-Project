@@ -2642,15 +2642,14 @@
       info: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>`
     };
 
-    // Configurable environment-aware origin detection
-    const getBackendUrl = () => {
-      if (window.CIVICSHIELD_API_URL) return window.CIVICSHIELD_API_URL.replace(/\/$/, "");
-      if (window.location && (window.location.protocol === "http:" || window.location.protocol === "https:")) {
-        return window.location.origin.replace(/\/$/, "");
-      }
-      return "http://localhost:5000";
-    };
-    const BACKEND_URL = getBackendUrl();
+    // Configurable environment-aware origin and backend detection
+    const BACKEND_URL = (
+      window.location.hostname === "localhost" || 
+      window.location.hostname === "127.0.0.1" || 
+      window.location.protocol === "file:"
+    )
+      ? "http://127.0.0.1:5000"
+      : (window.CIVICSHIELD_API_URL ? window.CIVICSHIELD_API_URL.replace(/\/$/, "") : "https://civicshield-backend-pqh0.onrender.com");
 
     const App = {
       activeTab: "upload",
@@ -2662,11 +2661,6 @@
       isScanning: false,
       scanStepTimer: null,
       lastChatMsg: "",
-      activeTab: "upload",
-      file: null,
-      lastData: null,
-      lastInput: "",
-      historyKey: "civicshield_history_v2",
 
       init() {
         this.cache();
@@ -2678,6 +2672,24 @@
         this.bindChatbot();
         this.renderHistory();
         this.bindGlobalShortcuts();
+        this.checkHealth();
+      },
+
+      async checkHealth() {
+        try {
+          const res = await fetch(`${BACKEND_URL}/api/health`);
+          if (!res.ok) {
+            console.warn(`CivicShield health check: HTTP ${res.status} (${res.statusText || "Degraded"})`);
+            return;
+          }
+          const data = await res.json().catch(() => null);
+          if (data && data.status === "healthy") {
+            const dot = this.$(".chatbot-header-title .status-dot");
+            if (dot) dot.style.background = "var(--success)";
+          }
+        } catch (e) {
+          console.info("CivicShield backend status check:", e.message);
+        }
       },
 
       cache() {
@@ -2846,15 +2858,24 @@
           const response = await fetch(`${BACKEND_URL}/api/scan`, { method: "POST", body: formData });
           this.setScanLoaderStep("Synthesizing forensic risk score...", 95);
 
+          if (!response.ok) {
+            let errorMsg = `Verification service reported HTTP status ${response.status}${response.statusText ? " (" + response.statusText + ")" : ""}.`;
+            try {
+              const errData = await response.json();
+              if (errData && errData.error) {
+                errorMsg = errData.error;
+              }
+            } catch {
+              // Non-JSON response (e.g. 404 HTML page) - retain statusText errorMsg
+            }
+            throw new Error(errorMsg);
+          }
+
           let data;
           try {
             data = await response.json();
           } catch {
             throw new Error("The scan service returned an unreadable response format.");
-          }
-
-          if (!response.ok) {
-            throw new Error(data?.error || `Verification service reported HTTP status ${response.status}.`);
           }
 
           this.hideScanLoader();
@@ -3217,11 +3238,24 @@
           this.removeChatMessage(typingId);
 
           if (!res.ok) {
-            const errData = await res.json().catch(() => null);
-            throw new Error(errData?.error || `Server returned HTTP ${res.status}`);
+            let errorMsg = `Server returned HTTP ${res.status}${res.statusText ? " (" + res.statusText + ")" : ""}`;
+            try {
+              const errData = await res.json();
+              if (errData && errData.error) {
+                errorMsg = errData.error;
+              }
+            } catch {
+              // Non-JSON response (e.g. 404 HTML page) - retain statusText errorMsg
+            }
+            throw new Error(errorMsg);
           }
 
-          const data = await res.json();
+          let data;
+          try {
+            data = await res.json();
+          } catch {
+            throw new Error("The AI assistant returned an unreadable response format.");
+          }
           const reply = data.reply || data.response || "I am available to assist with cyber fraud verification.";
           this.addChatMessage("bot", reply);
 

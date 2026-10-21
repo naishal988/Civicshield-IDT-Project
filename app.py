@@ -81,11 +81,9 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 app = Flask(__name__, static_folder=str(STATIC_DIR))
 
 # Configurable CORS handling
-CORS_ORIGINS_RAW = os.getenv("CORS_ORIGINS", "*")
-CORS_ORIGINS = [orig.strip() for orig in CORS_ORIGINS_RAW.split(",") if orig.strip()]
 CORS(
     app,
-    resources={r"/api/*": {"origins": CORS_ORIGINS if CORS_ORIGINS != ["*"] else "*"}},
+    resources={r"/api/*": {"origins": "*"}},
     supports_credentials=True,
     allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-Request-ID"],
     methods=["GET", "POST", "OPTIONS", "HEAD"],
@@ -867,8 +865,10 @@ def _call_groq(messages: list[dict]) -> tuple[str, str]:
 def index():
     return send_from_directory(BASE_DIR, "index.html")
 
-@app.route("/api/health", methods=["GET"])
+@app.route("/api/health", methods=["GET", "OPTIONS"])
 def health():
+    if request.method == "OPTIONS":
+        return "", 204
     return jsonify({
         "status": "healthy",
         "service": "CivicShield AI System",
@@ -886,9 +886,11 @@ def health():
         "timestamp": int(time.time()),
     })
 
-@app.route("/api/scan", methods=["POST"])
+@app.route("/api/scan", methods=["POST", "OPTIONS"])
 @limiter.limit("60 per hour")
 def scan():
+    if request.method == "OPTIONS":
+        return "", 204
     extracted_text = ""
     filename = None
 
@@ -945,9 +947,11 @@ def scan():
     result = _run_ai_analysis(extracted_text, filename)
     return jsonify(result), 200
 
-@app.route("/api/chat", methods=["POST"])
+@app.route("/api/chat", methods=["POST", "OPTIONS"])
 @limiter.limit("120 per hour")
 def chat():
+    if request.method == "OPTIONS":
+        return "", 204
     """
     Multi-turn conversational AI endpoint powered by Groq (openai/gpt-oss-120b)
     with dynamic heuristic fallback during rate limits or latency spikes.
