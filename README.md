@@ -27,7 +27,7 @@
 7. [Installation & Local Setup](#7-installation--local-setup)
 8. [Docker & Container Deployment](#8-docker--container-deployment)
 9. [Cloud Deployment Guide (Render / Vercel / Railway)](#9-cloud-deployment-guide-render--vercel--railway)
-10. [Academic IDT Team Credits & Contributions](#10-academic-idt-team-credits--contributions)
+10. [Project Leadership & Contribution Matrix](#10-project-leadership--contribution-matrix)
 11. [Risk Score Benchmark & Demo Test Cases (1 to 10 Calibration)](#risk-score-benchmark--demo-test-cases-1-to-10-calibration)
 
 ---
@@ -430,18 +430,39 @@ docker run -d --name civicshield-app \
 
 ---
 
-## 10. Academic IDT Team Credits & Contributions
+## 10. Project Leadership & Contribution Matrix
 
-This project was conceived, designed, and engineered as an **Interdisciplinary Team (IDT)** academic capstone project combining Cybersecurity Forensics, Applied Artificial Intelligence, and Modern Full-Stack Software Engineering.
+> **Important Academic & Governance Notice:**
+> **CivicShield was conceptualized, architected, and fully implemented by Naishal Nadiya (Technical & Product Lead). The repository includes co-authors representing the academic IDT group members for coursework and viva evaluation.**
 
-### Core Project Contributors
+This project was developed as an **Interdisciplinary Team (IDT)** academic capstone project combining Cybersecurity Forensics, Applied Artificial Intelligence, and Modern Full-Stack Software Engineering.
 
-| Contributor | GitHub Profile & Trailer | Core Subsystem Responsibilities |
-| :--- | :--- | :--- |
-| **Pranav** | [@cyber-pranav](https://github.com/cyber-pranav)<br>`Co-authored-by: cyber-pranav <cyber-pranav@users.noreply.github.com>` | **LLM Architecture**<br>• Groq Cloud API integration (`openai/gpt-oss-120b`).<br>• Prompt engineering, multi-turn conversational memory, and autonomous fallback logic.<br>• REST API design & test verification. |
-| **Diya Patel** | [@diyap2997-sketch](https://github.com/diyap2997-sketch)<br>`Co-authored-by: Diya Patel <diyap2997-sketch@users.noreply.github.com>` | **UI/UX Engineering & Responsive Design**<br>• Glassmorphic dark design system and typography.<br>• Responsive layout across mobile, tablet, and desktop views.<br>• Micro-animations, SVG risk score meter, and history drawer. |
-| **Krishsinh Raj** | [@Krishsinh-Raj-007](https://github.com/Krishsinh-Raj-007)<br>`Co-authored-by: Krishsinh-Raj-007 <Krishsinh-Raj-007@users.noreply.github.com>` | **Cybersecurity & Heuristic Rule Engine**<br>• Digital arrest & parcel scam threat taxonomy design.<br>• Government typosquatting & lookalike phishing domain algorithms.<br>• Personal UPI VPA detection and threat scoring matrix. |
-| **Ansh Dohare** | [@urxansh](https://github.com/urxansh)<br>`Co-authored-by: Ansh Dohare <urxansh@users.noreply.github.com>` | **Computer Vision, OCR & System DevOps**<br>• Multi-pass PIL image pre-processing pipeline (contrast/binarization).<br>• PyPDF stream parser and Tesseract OCR integration.<br>• Docker containerization, healthchecks, and production hardening. |
+### Leadership & Role Distinction
+
+1. **Product Architect & Technical Lead: Naishal Nadiya**
+   - **Sole Creator & Lead Developer** of CivicShield.
+   - Designed and engineered the entire core architecture, Flask backend, heuristic forensic scoring engine, Groq LLM integration (`openai/gpt-oss-120b`), OCR/PDF parsing pipeline, and modern dark-mode frontend interface.
+   - Conceptualized and calibrated the deterministic 1-to-10 risk calibration matrix and unified single-page architecture.
+
+2. **IDT Group Administrative Lead: Krishsinh Raj**
+   - Handled academic coordination, institutional compliance, faculty liaison, and coursework submissions.
+
+3. **Supporting Collaborators / Co-authors:**
+   - **Diya Patel**: Documentation support & test dataset aggregation.
+   - **Pranav** ([@cyber-pranav](https://github.com/cyber-pranav)): Edge-case testing & presentation assets.
+   - **Ansh Dohare** ([@urxansh](https://github.com/urxansh)): Survey feedback & user testing.
+
+---
+
+### Contribution Weightage Matrix
+
+| Member | Role | Core Contributions | Weightage |
+| :--- | :--- | :--- | :---: |
+| **Naishal Nadiya** | Product Lead & Lead Architect | End-to-end full-stack development, 1-10 risk calibration engine, Groq AI pipeline, OCR/PDF parsing, security logic | **85%** |
+| **Krishsinh Raj** | IDT Group Administrative Lead | Academic coordination, coursework deliverables, report compilation | **5%** |
+| **Diya Patel** | Team Collaborator | Test dataset collection, sample scam text verification | **4%** |
+| **Pranav** | Team Collaborator | Browser edge-case testing, feedback collation | **3%** |
+| **Ansh Dohare** | Team Collaborator | User testing, UI usability review | **3%** |
 
 ---
 
