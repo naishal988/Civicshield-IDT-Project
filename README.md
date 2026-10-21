@@ -28,6 +28,7 @@
 8. [Docker & Container Deployment](#8-docker--container-deployment)
 9. [Cloud Deployment Guide (Render / Vercel / Railway)](#9-cloud-deployment-guide-render--vercel--railway)
 10. [Academic IDT Team Credits & Contributions](#10-academic-idt-team-credits--contributions)
+11. [Risk Score Benchmark & Demo Test Cases (1 to 10 Calibration)](#risk-score-benchmark--demo-test-cases-1-to-10-calibration)
 
 ---
 
@@ -444,9 +445,96 @@ This project was conceived, designed, and engineered as an **Interdisciplinary T
 
 ---
 
+## Risk Score Benchmark & Demo Test Cases (1 to 10 Calibration)
+
+For academic viva demonstrations, defense juries, and faculty evaluations, CivicShield features a **deterministic 1-to-10 Risk Calibration Matrix**. The forensic engine computes transparent, reproducible threat scores by correlating domain registries, TLD abuse metrics, behavioral urgency patterns, and financial extortion markers.
+
+### Viva Demonstration Matrix (1/10 to 10/10)
+
+| Score | Category | Verdict Badge | Example Demonstration Input | Forensic Signals & Underlying Rationale |
+| :---: | :--- | :--- | :--- | :--- |
+| **1.0** | Authoritative Filing | `Safe` (Green) | `https://incometax.gov.in Reference No: IT/2026/8941` | Valid `.gov.in` domain + formal administrative reference number syntax. Maximum trust points awarded, 0 threat signals. |
+| **2.0** | Verified Official Portal | `Safe` (Green) | `https://parivahan.gov.in` | Verified legitimate Indian government portal (`.gov.in` / `.nic.in`) without formal case filing syntax. |
+| **3.0** | Benign Communication | `Safe` (Green) | `Meeting scheduled with municipal road repair team next Monday at city center.` | Non-official general text without any urgency, coercion, threat keywords, or external links. Clean baseline score. |
+| **4.5** | Generic Third-Party Domain | `Suspicious` (Amber) | `https://news-bulletin.org/daily-update` | Generic non-government domain (`.org`, `.com`, `.net`). Unverified source without explicit scam triggers. |
+| **5.5** | Unverified Domain + Urgency | `Suspicious` (Amber) | `https://portal-services.com/check KYC update pending immediately` | Generic domain (`4.5`) combined with soft coercive urgency cue (`immediately`, `pending KYC update`). |
+| **7.0** | Urgent Coercion + Fake Fine | `High Risk` (Red) | `Electricity power supply disconnected tonight pay penalty within 2 hours at https://bill-pay-online.net` | Non-gov link + utility disconnection threat (`utility_kyc_bait`) + fake penalty demand + 2-hour deadline pressure. |
+| **8.0** | Phishing Infrastructure | `High Risk` (Red) | `https://phishtank.icu/login` or `http://192.168.1.1/verify` | Disposable high-risk TLD (`.icu`, `.top`, `.xyz`) or raw numeric IPv4 hostname. Immediate minimum 8.0 score trigger. |
+| **9.0** | Phishing + Arrest Threat | `High Risk` (Red) | `CBI arrest warrant issued against your Aadhaar. Connect immediately on video call: https://cbi-investigation.top/case` | Malicious TLD (`.top`) combined with simulated CBI arrest warrant, Aadhaar misuse threat, and video call confinement. |
+| **10.0** | Phishing + Arrest + Extortion | `High Risk` (Red) | `Digital arrest order: CBI NBW issued. Transfer Rs 98,000 bail deposit to rbi-clearing@okhdfcbank or https://court-bail.icu/pay now` | Maximum severity composite: Malicious TLD (`.icu`) + Digital Arrest non-bailable warrant + personal UPI VPA extortion (`@okhdfcbank`). |
+
+---
+
+### Quick Copy-Paste Test Inputs for Faculty Review
+
+Use the following snippets during live project evaluation to demonstrate the full dynamic range of the risk meter:
+
+#### Test 1: Verified Safe Notice (Score: 1.0 / 10)
+```text
+https://incometax.gov.in Reference No: IT/2026/8941
+```
+*Expected Result:* Score **1.0**, Badge **Verified low risk** (Green ring), Findings report official government domain verification and formal filing syntax.
+
+#### Test 2: Standard Official Portal (Score: 2.0 / 10)
+```text
+https://parivahan.gov.in
+```
+*Expected Result:* Score **2.0**, Badge **Verified low risk** (Green ring), Confirms official `.gov.in` whitelist status.
+
+#### Test 3: Clean Benign Message (Score: 3.0 / 10)
+```text
+Meeting scheduled with municipal road repair team next Monday at city center.
+```
+*Expected Result:* Score **3.0**, Badge **Verified low risk** (Green ring), Zero threat tags detected.
+
+#### Test 4: Generic Unverified Link (Score: 4.5 / 10)
+```text
+https://news-bulletin.org/daily-update
+```
+*Expected Result:* Score **4.5**, Badge **Suspicious** (Amber ring), Signals non-government third-party domain.
+
+#### Test 5: Unverified Domain with Urgency Marker (Score: 5.5 / 10)
+```text
+https://portal-services.com/check KYC update pending immediately
+```
+*Expected Result:* Score **5.5**, Badge **Suspicious** (Amber ring), Flags artificial deadline pressure alongside non-gov destination.
+
+#### Test 6: Fake Challan / Utility Disconnection Threat (Score: 7.0 / 10)
+```text
+Electricity power supply disconnected tonight pay penalty within 2 hours at https://bill-pay-online.net
+```
+*Expected Result:* Score **7.0**, Badge **High risk** (Red ring), Flags high-pressure power cutoff cue, artificial deadline, and penalty demand.
+
+#### Test 7: PhishTank Malicious TLD URL (Score: 8.0 / 10)
+```text
+https://phishtank.icu/login
+```
+*Expected Result:* Score **8.0**, Badge **High risk** (Red ring), Flags critical indicator for disposable `.icu` phishing infrastructure.
+
+#### Test 8: Raw IP Address Hostname (Score: 8.0 / 10)
+```text
+http://192.168.1.1/verify
+```
+*Expected Result:* Score **8.0**, Badge **High risk** (Red ring), Flags critical indicator for direct numeric IP address bypassing DNS reputation.
+
+#### Test 9: Law Enforcement Impersonation & Arrest Threat (Score: 9.0 / 10)
+```text
+CBI arrest warrant issued against your Aadhaar. Connect immediately on video call: https://cbi-investigation.top/case
+```
+*Expected Result:* Score **9.0**, Badge **High risk** (Red ring), Detects fake CBI warrant, coercive video call demand, and malicious `.top` TLD.
+
+#### Test 10: Digital Arrest & UPI Extortion Trap (Score: 10.0 / 10)
+```text
+Digital arrest order: CBI NBW issued. Transfer Rs 98,000 bail deposit to rbi-clearing@okhdfcbank or https://court-bail.icu/pay now
+```
+*Expected Result:* Score **10.0**, Badge **High risk** (Red ring), Flags digital arrest extortion, fraudulent personal UPI VPA (`@okhdfcbank`), and disposable `.icu` link.
+
+---
+
 <div align="center">
 
 **CivicShield — Empowering Citizens with Autonomous Cybersecurity Intelligence.**  
 *National Cyber Crime Reporting Helpline: 1930 | Portal: cybercrime.gov.in*
 
 </div>
+
