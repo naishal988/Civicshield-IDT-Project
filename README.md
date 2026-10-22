@@ -456,13 +456,13 @@ This project was developed as an **Interdisciplinary Team (IDT)** academic capst
 
 ### Contribution Weightage Matrix
 
-| Member | Role | Core Contributions | Weightage |
-| :--- | :--- | :--- | :---: |
-| **Naishal Nadiya** | Product Lead & Lead Architect | End-to-end full-stack development, 1-10 risk calibration engine, Groq AI pipeline, OCR/PDF parsing, security logic | **85%** |
-| **Krishsinh Raj** | IDT Group Administrative Lead | Academic coordination, coursework deliverables, report compilation | **5%** |
-| **Diya Patel** | Team Collaborator | Test dataset collection, sample scam text verification | **4%** |
-| **Pranav** | Team Collaborator | Browser edge-case testing, feedback collation | **3%** |
-| **Ansh Dohare** | Team Collaborator | User testing, UI usability review | **3%** |
+| Member | Core Contributions | 
+| :--- | :--- | :---: |
+| **Naishal Nadiya** | End-to-end full-stack development, 1-10 risk calibration engine, Groq AI pipeline, OCR/PDF parsing, security logic | 
+| **Krishsinh Raj** | Academic coordination, coursework deliverables, report compilation | 
+| **Diya Patel** | Test dataset collection, sample scam text verification |
+| **Pranav** | Browser edge-case testing, feedback collation | 
+| **Ansh Dohare** | User testing, UI usability review |
 
 ---
 
