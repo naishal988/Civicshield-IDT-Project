@@ -454,18 +454,6 @@ This project was developed as an **Interdisciplinary Team (IDT)** academic capst
 
 ---
 
-### Contribution Weightage Matrix
-
-| Member | Core Contributions |
-| :--- | :--- |
-| **Naishal Nadiya** | End-to-end full-stack development, 1-10 risk calibration engine, Groq AI pipeline, OCR/PDF parsing, security logic |
-| **Krishsinh Raj** | Academic coordination, coursework deliverables, report compilation |
-| **Diya Patel** | Test dataset collection, sample scam text verification |
-| **Pranav** | Browser edge-case testing, feedback collation |
-| **Ansh Dohare** | User testing, UI usability review |
-
----
-
 ## Risk Score Benchmark & Demo Test Cases (1 to 10 Calibration)
 
 For academic viva demonstrations, defense juries, and faculty evaluations, CivicShield features a **deterministic 1-to-10 Risk Calibration Matrix**. The forensic engine computes transparent, reproducible threat scores by correlating domain registries, TLD abuse metrics, behavioral urgency patterns, and financial extortion markers.
