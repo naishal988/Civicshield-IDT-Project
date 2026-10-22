@@ -1,0 +1,33 @@
+# Environment configurations
+.env
+*.env
+!.env.example
+
+# Temporary uploads and storage
+uploads/*
+!uploads/.gitkeep
+
+# Python caches and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE and Editor configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local build and container artifacts
+.docker/
+node_modules/

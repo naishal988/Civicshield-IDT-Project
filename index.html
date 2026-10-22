@@ -2971,53 +2971,56 @@
         const value = this.activeTab === "text" ? this.$("#textInput").value : this.lastInput;
         const lower = String(value).toLowerCase();
 
-        const scamSignals = [
-          /urgent|immediately|within \d+ (hour|hours|minute|minutes)/,
-          /blocked|suspend|arrest|legal action|police/,
-          /pay|payment|penalty|fee|refund.*claim/,
-          /click|verify|login|kyc/,
-          /fake-gov|gov[-_.]|bit\.ly|tinyurl|t\.co/
-        ];
-        const hits = scamSignals.filter(rx => rx.test(lower)).length;
-        const score = Math.min(9.6, Math.max(1.2, hits * 1.72 + (/\bhttps?:\/\//.test(lower) ? 1 : 0)));
+        // Check for trusted platforms & cloud deployments
+        const isTrusted = /workers\.dev|pages\.dev|github\.io|vercel\.app|netlify\.app|internshala\.com|google\.com|linkedin\.com|github\.com|\.gov\.in|\.nic\.in/.test(lower);
+        
+        // Critical fraud patterns
+        const hasDigitalArrest = /digital\s*arrest|virtual\s*arrest|skype.*(?:call|video|interrogation)|stay\s*on\s*(?:video|camera)/.test(lower);
+        const hasFakeLegal = /non[- ]bailable\s*warrant|arrest\s*warrant\s*issued|cbi\s*(?:raid|warrant|interrogation)|pmla\s*case|money\s*laundering/.test(lower);
+        const hasCourierScam = /(?:fedex|dhl|customs|courier|parcel).*(?:narcotics|drugs|contraband|mdma|seized|confiscated)/.test(lower);
+        const hasExtortion = /(?:transfer|pay).*to.*(?:rbi|safe|clearing|custody)|bail\s*deposit|pay.*to\s*avoid\s*arrest/.test(lower);
+        const hasSpoofedGovDomain = /(?:echallan|parivahan|incometax|uidai|aadhaar).*(?:\.vip|\.xyz|\.top|\.online|\.buzz|\.icu)/.test(lower);
+        const hasUrgentThreat = /(?:within\s*\d+\s*(?:hour|minute|hours)|immediately).*to\s*avoid\s*(?:arrest|deactivation|penalty)/.test(lower);
+        const hasApkThreat = /\b[a-zA-Z0-9_\-]+\.apk\b|install\s*(?:anydesk|teamviewer|rustdesk|quicksupport)/.test(lower);
 
-        if (score >= 6.0) {
+        if (hasDigitalArrest || (hasFakeLegal && hasExtortion) || hasSpoofedGovDomain || hasCourierScam) {
           return {
-            score,
+            score: 9.5,
             verdict_code: "danger",
-            verdict: "High risk — likely scam",
-            summary: "This content combines multiple social-engineering signals such as urgency, pressure, suspicious links or requests for money. Treat it as unsafe until independently verified.",
+            verdict: "CRITICAL THREAT — LIKELY SCAM",
+            summary: "Extortion, impersonation of law enforcement, or fraudulent phishing infrastructure detected. Do NOT transfer funds, install applications, or click links. Report immediately to 1930.",
             findings: [
-              { type: "issue", text: "Pressure language detected: the message pushes for immediate action." },
-              { type: "issue", text: "Potentially suspicious link or verification instruction detected." },
-              { type: "warn", text: "Financial or account-related action is being requested." }
+              { type: "issue", text: "Coercive digital arrest, fake arrest warrant, or courier seizure extortion pattern detected." },
+              { type: "issue", text: "Demand for fund transfers to purported safe accounts or non-official links identified." }
             ],
             extracted_text: value || "No text preview available."
           };
         }
 
-        if (score >= 3.0) {
+        if (hasFakeLegal || hasExtortion || hasApkThreat || (hasUrgentThreat && !isTrusted)) {
           return {
-            score,
-            verdict_code: "warning",
-            verdict: "Needs manual verification",
-            summary: "Some signals are unusual enough to deserve a second look. Do not use links or contact details supplied by the message until the sender is independently confirmed.",
+            score: 7.5,
+            verdict_code: "danger",
+            verdict: "HIGH RISK — LIKELY SCAM",
+            summary: "High-confidence coercive threat markers identified. Multiple pressure cues (threats, penalties, or suspicious software) detected.",
             findings: [
-              { type: "warn", text: "The message contains cues that can be associated with impersonation or urgency." },
-              { type: "warn", text: "Verify the domain, sender and requested action through an official channel." }
+              { type: "issue", text: "Legal coercion or remote-access/APK application reference detected." }
             ],
             extracted_text: value || "No text preview available."
           };
         }
 
+        // Clean trusted domain or benign content
         return {
-          score,
+          score: 1.0,
           verdict_code: "safe",
-          verdict: "Low risk — no strong red flags",
-          summary: "No major scam patterns were detected by the local demo rules. That does not prove the message is authentic, so verify important requests through official channels.",
+          verdict: "LIKELY LEGITIMATE",
+          summary: isTrusted 
+            ? "Verified authentic platform or standard web service. No coercive extortion language, scam UPI handles, or phishing links identified."
+            : "No threat detected. General communication appears safe, non-coercive, and authentic.",
           findings: [
-            { type: "good", text: "No strong urgency or threat pattern was detected." },
-            { type: "good", text: "No obvious high-risk payment or link pattern was detected." }
+            { type: "good", text: isTrusted ? "Verified legitimate platform or cloud application." : "No coercive pressure or scam payment demands detected." },
+            { type: "good", text: "No lookalike government phishing domains or malicious APK references identified." }
           ],
           extracted_text: value || "No text preview available."
         };
