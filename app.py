@@ -17,7 +17,11 @@ import re
 import json
 import time
 import uuid
+import base64
+import hashlib
 import logging
+import threading
+import requests
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -481,10 +485,296 @@ URL_PATTERN = re.compile(r"https?://[^\s<>\"')]+", re.IGNORECASE)
 RAW_DOMAIN_PATTERN = re.compile(r"\b([a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?)\b", re.IGNORECASE)
 UPI_HANDLE_PATTERN = re.compile(r"\b[a-zA-Z0-9.\-_]{2,50}@(okhdfcbank|okaxis|oksbi|okicici|ybl|paytm|upi|axl|ibl|barodampay|federal|idfcbank|freecharge|airtel)\b", re.IGNORECASE)
 
+# ── PhishTank & Threat Intelligence Module ────────────────────────────────────
+PHISHTANK_API_URL = "https://checkurl.phishtank.com/checkurl/"
+PHISHTANK_USER_AGENT = os.getenv("PHISHTANK_USER_AGENT", "phishtank/civicshield-naishal988")
+PHISHTANK_APP_KEY = os.getenv("PHISHTANK_API_KEY", "")
+
+_PHISHTANK_CACHE: dict[str, dict] = {}
+_PHISHTANK_CACHE_LOCK = threading.Lock()
+_COMMUNITY_PHISH_FEED: set[str] = set()
+_COMMUNITY_FEED_LOCK = threading.Lock()
+
+def sync_community_phish_feed():
+    """Fetches high-confidence active verified phishing URLs into memory."""
+    global _COMMUNITY_PHISH_FEED
+    try:
+        resp = requests.get("https://openphish.com/feed.txt", timeout=3.5)
+        if resp.status_code == 200:
+            urls = {
+                line.strip().lower().rstrip("/")
+                for line in resp.text.splitlines()
+                if line.strip() and not line.startswith("#")
+            }
+            with _COMMUNITY_FEED_LOCK:
+                _COMMUNITY_PHISH_FEED = urls
+            log.info("Threat Intel: Synchronized %d active phishing URLs into memory", len(urls))
+    except Exception as e:
+        log.debug("Community phish feed sync failed (fail-safe): %s", e)
+
+def check_phishtank_url(url: str, timeout: float = 2.5) -> dict | None:
+    """
+    Checks if a URL is confirmed phishing in PhishTank or live global intelligence feed.
+    Returns metadata dict if active verified phish or PhishTank advisory page, else None.
+    """
+    if not url:
+        return None
+
+    # Check for direct PhishTank detail / advisory URL
+    pt_detail_match = re.search(
+        r"https?://(?:www\.)?phishtank\.(?:com|org)/phish_detail\.php\?phish_id=(\d+)",
+        url,
+        re.IGNORECASE
+    )
+    if pt_detail_match:
+        phish_id = pt_detail_match.group(1)
+        return {
+            "in_database": True,
+            "valid": True,
+            "phish_id": phish_id,
+            "detail_url": url,
+            "verified_at": "Documented in PhishTank Incident Database",
+            "target": "PhishTank Threat Investigation Record",
+            "source": "PhishTank Incident Report",
+            "is_advisory": True,
+            "url": url
+        }
+
+    clean_url = url.strip()
+    norm_key = clean_url.lower().rstrip("/")
+
+    # Check live community feed (0ms memory lookup)
+    with _COMMUNITY_FEED_LOCK:
+        if norm_key in _COMMUNITY_PHISH_FEED:
+            return {
+                "in_database": True,
+                "valid": True,
+                "phish_id": "COMMUNITY-FEED",
+                "detail_url": clean_url,
+                "verified_at": "Active",
+                "target": "Active Phishing Campaign",
+                "source": "Global Verified Phishing Feed",
+                "is_advisory": False,
+                "url": clean_url
+            }
+
+    # Check in-memory cache
+    with _PHISHTANK_CACHE_LOCK:
+        cached = _PHISHTANK_CACHE.get(norm_key)
+        if cached and (time.time() - cached.get("cached_at", 0) < 3600):
+            return cached.get("data")
+
+    # If the URL is an authoritative government domain, skip external network roundtrip
+    parsed = urlparse(clean_url)
+    host = (parsed.hostname or "").lower().strip(".")
+    if host in OFFICIAL_EXACT or host.endswith(OFFICIAL_SUFFIXES):
+        return None
+
+    # Query PhishTank Check URL API
+    headers = {"User-Agent": PHISHTANK_USER_AGENT}
+    variants = [clean_url]
+    if clean_url.endswith("/"):
+        variants.append(clean_url[:-1])
+    else:
+        variants.append(clean_url + "/")
+
+    for cand in variants:
+        try:
+            payload = {"url": cand, "format": "json"}
+            if PHISHTANK_APP_KEY:
+                payload["app_key"] = PHISHTANK_APP_KEY
+            resp = requests.post(
+                PHISHTANK_API_URL,
+                data=payload,
+                headers=headers,
+                timeout=timeout
+            )
+            if resp.status_code == 200:
+                res = resp.json().get("results", {})
+                if res.get("in_database") and res.get("valid"):
+                    match_data = {
+                        "in_database": True,
+                        "valid": True,
+                        "phish_id": str(res.get("phish_id") or "PT-VERIFIED"),
+                        "detail_url": res.get("phish_detail_page") or f"https://www.phishtank.com/phish_detail.php?phish_id={res.get('phish_id')}",
+                        "verified_at": res.get("verified_at") or "Confirmed",
+                        "target": res.get("target") or "Credential Phishing / Identity Theft",
+                        "source": "PhishTank Cybersecurity Database",
+                        "is_advisory": False,
+                        "url": cand
+                    }
+                    with _PHISHTANK_CACHE_LOCK:
+                        _PHISHTANK_CACHE[norm_key] = {"cached_at": time.time(), "data": match_data}
+                    return match_data
+                elif res.get("in_database") is False or res.get("valid") is False:
+                    with _PHISHTANK_CACHE_LOCK:
+                        _PHISHTANK_CACHE[norm_key] = {"cached_at": time.time(), "data": None}
+                    return None
+        except Exception:
+            continue
+
+    return None
+
+# ── VirusTotal & Multi-Vendor Threat Intelligence Module ──────────────────────
+VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
+_VIRUSTOTAL_CACHE: dict[str, dict] = {}
+_VIRUSTOTAL_CACHE_LOCK = threading.Lock()
+
+def check_virustotal_url(url: str, timeout: float = 2.5) -> dict | None:
+    """
+    Queries VirusTotal API v3 for URL reputation across 80+ global antivirus/security vendors.
+    Also detects direct VirusTotal GUI analysis links.
+    """
+    if not url:
+        return None
+
+    clean_url = url.strip()
+
+    # 1. Check for direct VirusTotal GUI report links
+    vt_gui_match = re.search(
+        r"https?://(?:www\.)?virustotal\.com/gui/(?:url|file)/([a-zA-Z0-9_\-]+)",
+        clean_url,
+        re.IGNORECASE
+    )
+    if vt_gui_match:
+        return {
+            "is_threat": True,
+            "malicious": 1,
+            "suspicious": 0,
+            "total_engines": 90,
+            "flagged_by": ["VirusTotal Public Forensic Investigation"],
+            "source": "VirusTotal Advisory Page",
+            "is_advisory": True,
+            "url": clean_url
+        }
+
+    if not VIRUSTOTAL_API_KEY:
+        return None
+
+    # Skip checking authoritative government portals
+    parsed = urlparse(clean_url)
+    host = (parsed.hostname or "").lower().strip(".")
+    if host in OFFICIAL_EXACT or host.endswith(OFFICIAL_SUFFIXES):
+        return None
+
+    norm_key = clean_url.lower().rstrip("/")
+    with _VIRUSTOTAL_CACHE_LOCK:
+        cached = _VIRUSTOTAL_CACHE.get(norm_key)
+        if cached and (time.time() - cached.get("cached_at", 0) < 3600):
+            return cached.get("data")
+
+    try:
+        url_id = base64.urlsafe_b64encode(clean_url.encode()).decode().strip("=")
+        endpoint = f"https://www.virustotal.com/api/v3/urls/{url_id}"
+        headers = {
+            "x-apikey": VIRUSTOTAL_API_KEY,
+            "User-Agent": "CivicShield-ThreatIntel/2.0"
+        }
+        resp = requests.get(endpoint, headers=headers, timeout=timeout)
+        if resp.status_code == 200:
+            data = resp.json().get("data", {})
+            attr = data.get("attributes", {})
+            stats = attr.get("last_analysis_stats", {})
+            malicious = stats.get("malicious", 0)
+            suspicious = stats.get("suspicious", 0)
+            total = sum(stats.values()) or 90
+
+            if malicious >= 1 or suspicious >= 2:
+                results_map = attr.get("last_analysis_results", {})
+                flagged = [
+                    f"{eng}: {res.get('result', 'malicious')}"
+                    for eng, res in results_map.items()
+                    if res.get("category") in ("malicious", "suspicious")
+                ][:4]
+
+                vt_match = {
+                    "is_threat": True,
+                    "malicious": malicious,
+                    "suspicious": suspicious,
+                    "total_engines": total,
+                    "flagged_by": flagged,
+                    "reputation": attr.get("reputation", 0),
+                    "source": "VirusTotal Global Threat Intelligence",
+                    "is_advisory": False,
+                    "url": clean_url
+                }
+                with _VIRUSTOTAL_CACHE_LOCK:
+                    _VIRUSTOTAL_CACHE[norm_key] = {"cached_at": time.time(), "data": vt_match}
+                return vt_match
+            else:
+                with _VIRUSTOTAL_CACHE_LOCK:
+                    _VIRUSTOTAL_CACHE[norm_key] = {"cached_at": time.time(), "data": None}
+                return None
+    except Exception as e:
+        log.debug("VirusTotal query error (fail-safe): %s", e)
+
+    return None
+
+def check_virustotal_file_hash(filepath: str, timeout: float = 3.0) -> dict | None:
+    """
+    Computes SHA256 of uploaded file and checks against VirusTotal's database of known malware.
+    """
+    if not VIRUSTOTAL_API_KEY or not os.path.exists(filepath):
+        return None
+
+    try:
+        hasher = hashlib.sha256()
+        with open(filepath, "rb") as f:
+            while chunk := f.read(65536):
+                hasher.update(chunk)
+        file_sha256 = hasher.hexdigest()
+
+        endpoint = f"https://www.virustotal.com/api/v3/files/{file_sha256}"
+        headers = {
+            "x-apikey": VIRUSTOTAL_API_KEY,
+            "User-Agent": "CivicShield-ThreatIntel/2.0"
+        }
+        resp = requests.get(endpoint, headers=headers, timeout=timeout)
+        if resp.status_code == 200:
+            data = resp.json().get("data", {})
+            attr = data.get("attributes", {})
+            stats = attr.get("last_analysis_stats", {})
+            malicious = stats.get("malicious", 0)
+            suspicious = stats.get("suspicious", 0)
+            total = sum(stats.values()) or 70
+
+            if malicious >= 1:
+                return {
+                    "is_malicious": True,
+                    "malicious": malicious,
+                    "suspicious": suspicious,
+                    "total_engines": total,
+                    "sha256": file_sha256,
+                    "type_description": attr.get("type_description", "Binary / Executable"),
+                    "meaningful_name": attr.get("meaningful_name") or os.path.basename(filepath),
+                    "source": "VirusTotal Malware Database"
+                }
+    except Exception as e:
+        log.debug("VirusTotal file hash check error (fail-safe): %s", e)
+
+    return None
+
+def _start_background_phish_sync():
+    """Initializes non-blocking background thread for periodic phishing feed sync."""
+    def _worker():
+        while True:
+            try:
+                sync_community_phish_feed()
+            except Exception as e:
+                log.debug("Phish feed background sync: %s", e)
+            time.sleep(3600)
+
+    t = threading.Thread(target=_worker, daemon=True, name="CivicShield-PhishSync")
+    t.start()
+
+_start_background_phish_sync()
+
 def classify_urls(text: str) -> dict:
     """
     Extracts and classifies URLs from text into:
       - official: Authoritative Indian government & public sector (.gov.in, .nic.in, etc.)
+      - phishtank_phish: Verified active phishing URLs matched against PhishTank & live threat intelligence
+      - virustotal_phish: Malicious URLs confirmed by VirusTotal global security engines
       - trusted: Recognized authentic platforms, developer clouds (workers.dev, github.io, internshala, etc.)
       - spoofed: Typosquatting / lookalike domains impersonating gov or banks on unauthorized infrastructure
       - suspicious_infra: Disposable TLDs (.top, .icu, .buzz) or raw IP addresses
@@ -504,6 +794,8 @@ def classify_urls(text: str) -> dict:
 
     results = {
         "official": [],
+        "phishtank_phish": [],
+        "virustotal_phish": [],
         "trusted": [],
         "spoofed": [],
         "suspicious_infra": [],
@@ -532,31 +824,43 @@ def classify_urls(text: str) -> dict:
             results["official"].append((url, host))
             continue
 
-        # 2. Trusted Platforms & Developer Clouds (Cloudflare Workers, GitHub Pages, Internshala, etc.)
+        # 2. PhishTank & Global Verified Threat Intelligence
+        pt_hit = check_phishtank_url(url)
+        if pt_hit and pt_hit.get("valid"):
+            results["phishtank_phish"].append((url, host, pt_hit))
+            continue
+
+        # 3. VirusTotal Multi-Vendor Antivirus Engine Intelligence
+        vt_hit = check_virustotal_url(url)
+        if vt_hit and vt_hit.get("is_threat"):
+            results["virustotal_phish"].append((url, host, vt_hit))
+            continue
+
+        # 3. Trusted Platforms & Developer Clouds (Cloudflare Workers, GitHub Pages, Internshala, etc.)
         if host in TRUSTED_PLATFORMS or any(host.endswith(sfx) for sfx in TRUSTED_SUFFIXES):
             results["trusted"].append((url, host))
             continue
 
-        # 3. URL Shorteners
+        # 4. URL Shorteners
         if host in URL_SHORTENERS:
             results["shortener"].append((url, host))
             continue
 
-        # 4. Spoofed Government or Banking Brands (Typosquatting)
+        # 5. Spoofed Government or Banking Brands (Typosquatting)
         is_spoofed_gov = any(token in host for token in GOV_BRAND_TOKENS)
         is_spoofed_bank = bool(re.search(r"(?:sbi|hdfc|icici|pnb|axisbank|kotak|bob).*(?:kyc|pan|aadhaar|update|verify|reward|refund|login|netbanking)", host))
         if is_spoofed_gov or is_spoofed_bank:
             results["spoofed"].append((url, host))
             continue
 
-        # 5. Raw IP Address or Suspicious Disposable TLDs
+        # 6. Raw IP Address or Suspicious Disposable TLDs
         is_ip = bool(re.match(r"^\d{1,3}(\.\d{1,3}){3}$", host))
         is_bad_tld = any(host.endswith(tld) for tld in SUSPICIOUS_TLDS)
         if is_ip or is_bad_tld:
             results["suspicious_infra"].append((url, host))
             continue
 
-        # 6. Standard Neutral Web Domain
+        # 7. Standard Neutral Web Domain
         results["neutral"].append((url, host))
 
     return results
@@ -616,7 +920,12 @@ def _run_groq_scan(text_clean: str, filename: str | None, heuristic_result: dict
             "}"
         )
 
-        user_content = f"Document/Filename: {filename or 'None'}\nContent to analyze:\n{text_clean[:6000]}"
+        extra_threat_intel = ""
+        ti_findings = [f["text"] for f in heuristic_result.get("findings", []) if any(k in f.get("text", "") for k in ("PhishTank", "VirusTotal"))]
+        if ti_findings:
+            extra_threat_intel = "\n\nCRITICAL FORENSIC THREAT INTELLIGENCE (PhishTank & VirusTotal Databases):\n" + "\n".join(ti_findings) + "\nYou MUST classify this verified threat as a CRITICAL THREAT (score >= 9.5, verdict_code 'danger')."
+
+        user_content = f"Document/Filename: {filename or 'None'}\nContent to analyze:\n{text_clean[:6000]}{extra_threat_intel}"
         completion = groq_client.chat.completions.create(
             model=GROQ_MODEL,
             messages=[
@@ -651,6 +960,12 @@ def _run_groq_scan(text_clean: str, filename: str | None, heuristic_result: dict
             score = max(score, h_score)
             verdict_code = "danger"
             verdict = heuristic_result.get("verdict", verdict)
+
+        # Retain heuristic PhishTank / VirusTotal findings if missing
+        for h_f in heuristic_result.get("findings", []):
+            if any(k in h_f.get("text", "") for k in ("PhishTank", "VirusTotal")):
+                if not any(k in f.get("text", "") for f in findings for k in ("PhishTank", "VirusTotal")):
+                    findings.insert(0, h_f)
 
         # Conversely, if heuristics detected trusted domain & clean text, ensure false positives are suppressed
         if h_score <= 1.5 and score > 2.5:
@@ -714,6 +1029,50 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
 
     # 2. URL Classification & Domain Forensics
     url_classes = classify_urls(text_clean)
+
+    for url, host, pt_info in url_classes.get("phishtank_phish", []):
+        phish_id = pt_info.get("phish_id", "PT-VERIFIED")
+        source = pt_info.get("source", "PhishTank Cybersecurity Database")
+        target = pt_info.get("target") or "Credential Phishing / Identity Theft"
+        is_adv = pt_info.get("is_advisory", False)
+
+        detected_tags.append("phishtank_confirmed_phishing")
+        if is_adv:
+            findings.append({
+                "type": "issue",
+                "severity": "critical",
+                "text": f"PhishTank Advisory Page: Link '{url}' points directly to an official cybersecurity investigation report documenting an active phishing attack (Phish ID: {phish_id})."
+            })
+            risk_points += 8.5
+        else:
+            findings.append({
+                "type": "issue",
+                "severity": "critical",
+                "text": f"PhishTank Threat Intelligence Alert: URL '{url}' is confirmed as an active, verified phishing website in the {source} (Phish ID: {phish_id}). Target profile: {target}."
+            })
+            risk_points += 9.5
+
+    for url, host, vt_info in url_classes.get("virustotal_phish", []):
+        malicious_count = vt_info.get("malicious", 1)
+        total_eng = vt_info.get("total_engines", 90)
+        flagged_by = vt_info.get("flagged_by", [])
+        is_adv = vt_info.get("is_advisory", False)
+
+        detected_tags.append("virustotal_confirmed_threat")
+        if is_adv:
+            findings.append({
+                "type": "issue",
+                "severity": "critical",
+                "text": f"VirusTotal Advisory Page: Link '{url}' points directly to an official VirusTotal malware/phishing forensic report."
+            })
+            risk_points += 8.5
+        else:
+            findings.append({
+                "type": "issue",
+                "severity": "critical",
+                "text": f"VirusTotal Threat Intelligence Alert: URL '{url}' is detected as malicious by {malicious_count}/{total_eng} global security vendors ({', '.join(flagged_by)})."
+            })
+            risk_points += 9.5
 
     for url, host in url_classes["official"]:
         findings.append({
@@ -822,9 +1181,17 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
 
     # Score calculation
     is_spoofed_or_bad_infra = bool(url_classes["spoofed"] or url_classes["suspicious_infra"])
-    has_severe_threat = any(t in detected_tags for t in ["digital_arrest", "narcotics_courier_trap", "fake_legal_coercion", "urgent_financial_coercion", "upi_payment_trap", "spoofed_phishing_domain"])
+    has_severe_threat = any(t in detected_tags for t in [
+        "digital_arrest", "narcotics_courier_trap", "fake_legal_coercion",
+        "urgent_financial_coercion", "upi_payment_trap", "spoofed_phishing_domain",
+        "phishtank_confirmed_phishing", "virustotal_confirmed_threat"
+    ])
 
-    if is_spoofed_or_bad_infra and has_severe_threat:
+    if "virustotal_confirmed_threat" in detected_tags:
+        risk = 9.8
+    elif "phishtank_confirmed_phishing" in detected_tags:
+        risk = 9.8
+    elif is_spoofed_or_bad_infra and has_severe_threat:
         risk = 10.0
     elif is_spoofed_or_bad_infra:
         risk = 9.0
@@ -844,7 +1211,22 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
         risk = max(1.0, min(10.0, 1.0 + risk_points - trust_points * 0.5))
 
     # Categorize Verdict
-    if risk >= 7.5:
+    if "virustotal_confirmed_threat" in detected_tags:
+        verdict = "CRITICAL THREAT — VIRUSTOTAL DETECTED THREAT"
+        verdict_code = "danger"
+        summary = (
+            "GLOBAL THREAT INTELLIGENCE ALERT: Active malicious/phishing threat confirmed via VirusTotal multi-vendor intelligence. "
+            "Do NOT visit, download payloads from, or enter credentials into this destination."
+        )
+    elif "phishtank_confirmed_phishing" in detected_tags:
+        verdict = "CRITICAL THREAT — CONFIRMED PHISHING ATTACK"
+        verdict_code = "danger"
+        summary = (
+            "GLOBAL THREAT INTELLIGENCE ALERT: Active phishing attack confirmed via PhishTank cybersecurity database. "
+            "This URL is engineered to harvest login credentials, passwords, or personal banking data. "
+            "Do NOT open this link or input any personal or financial information."
+        )
+    elif risk >= 7.5:
         verdict = "CRITICAL THREAT — LIKELY SCAM"
         verdict_code = "danger"
         summary = (
@@ -1133,10 +1515,14 @@ def scan():
         save_path = str(UPLOAD_DIR / f"{uuid.uuid4().hex}_{filename}")
         f.save(save_path)
 
+        vt_file_hit = None
         try:
             real_type = sniff_real_type(save_path)
             if real_type is None:
                 return jsonify({"error": "File signature does not match permitted document or image types."}), 400
+
+            # Multi-vendor antivirus scan via VirusTotal
+            vt_file_hit = check_virustotal_file_hash(save_path)
 
             if real_type == "pdf":
                 extracted_text = extract_text_from_pdf(save_path)
@@ -1166,6 +1552,17 @@ def scan():
         return jsonify({"error": "No file attachment or text buffer supplied in request."}), 400
 
     result = _run_ai_analysis(extracted_text, filename)
+
+    # If VirusTotal flagged the uploaded binary as malicious, override with critical malware alert
+    if 'vt_file_hit' in locals() and vt_file_hit and vt_file_hit.get("is_malicious"):
+        result["score"] = 10.0
+        result["verdict_code"] = "danger"
+        result["verdict"] = "CRITICAL THREAT — VIRUSTOTAL DETECTED MALWARE"
+        vt_msg = f"VirusTotal Malware Alert: File '{filename}' matched known malicious signatures across {vt_file_hit['malicious']}/{vt_file_hit['total_engines']} global security engines."
+        result["findings"] = [{"type": "issue", "severity": "critical", "text": vt_msg}] + [f for f in result.get("findings", []) if f.get("type") != "good"]
+        result["issues"] = [vt_msg] + result.get("issues", [])
+        result["summary"] = "CRITICAL MALWARE DETECTED: This file was confirmed as malicious by VirusTotal security engines. Do NOT execute or open this file."
+
     return jsonify(result), 200
 
 @app.route("/api/chat", methods=["POST", "OPTIONS"])
