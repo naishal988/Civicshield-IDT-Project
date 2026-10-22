@@ -27,8 +27,7 @@
 7. [Installation & Local Setup](#7-installation--local-setup)
 8. [Docker & Container Deployment](#8-docker--container-deployment)
 9. [Cloud Deployment Guide (Render / Vercel / Railway)](#9-cloud-deployment-guide-render--vercel--railway)
-10. [Project Leadership & Contribution Matrix](#10-project-leadership--contribution-matrix)
-11. [Risk Score Benchmark & Demo Test Cases (1 to 10 Calibration)](#risk-score-benchmark--demo-test-cases-1-to-10-calibration)
+10. [Risk Score Benchmark & Demo Test Cases (1 to 10 Calibration)](#risk-score-benchmark--demo-test-cases-1-to-10-calibration)
 
 ---
 
@@ -430,31 +429,7 @@ docker run -d --name civicshield-app \
 
 ---
 
-## 10. Project Leadership & Contribution Matrix
-
-This project was developed as an **Interdisciplinary Team (IDT)** academic capstone project combining Cybersecurity Forensics, Applied Artificial Intelligence, and Modern Full-Stack Software Engineering.
-
-### Leadership & Role Distinction
-
-1. **Naishal Nadiya**
-   - Designed and engineered the entire core architecture, Flask backend, heuristic forensic scoring engine, Groq LLM integration (`openai/gpt-oss-120b`), OCR/PDF parsing pipeline, and modern dark-mode frontend interface.
-   - Conceptualized and calibrated the deterministic 1-to-10 risk calibration matrix and unified single-page architecture.
-
-2. **Krishsinh Raj**
-   - Handled academic coordination, institutional compliance, faculty liaison, and coursework submissions.
-
-3. **Diya Patel**
-   - Documentation support & test dataset aggregation.
-     
-4. **Pranav Pandya**
-   - Edge-case testing & presentation assets.
-     
-4. **Ansh Dohare**
-   - Survey feedback & user testing, AEIOU CANVAS creation.
-
----
-
-## Risk Score Benchmark & Demo Test Cases (1 to 10 Calibration)
+## 10. Risk Score Benchmark & Demo Test Cases (1 to 10 Calibration)
 
 For academic viva demonstrations, defense juries, and faculty evaluations, CivicShield features a **deterministic 1-to-10 Risk Calibration Matrix**. The forensic engine computes transparent, reproducible threat scores by correlating domain registries, TLD abuse metrics, behavioral urgency patterns, and financial extortion markers.
 
