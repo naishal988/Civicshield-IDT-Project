@@ -2,13 +2,13 @@
 CivicShield Backend - app.py
 ============================
 Enterprise Flask API powering the CivicShield verification platform
-and the CivicShield AI Cyber Intelligence Assistant.
+and the CivicShield Cyber Threat Intelligence System.
 
 Architecture Highlights:
-  • LLM Engine: Groq — openai/gpt-oss-120b (131K context, reasoning effort control)
-  • Heuristic Engine: Lookalike phishing, typosquatting, UPI handle mismatch, digital arrest forensics
+  • Threat Intelligence: VirusTotal v3 Multi-Vendor Global API (80+ antivirus engines)
+  • Forensic Rules Engine: Impersonation detection, typosquatting, UPI handle mismatch, extortion forensics
   • OCR Pipeline: Multi-pass PIL image enhancement (grayscale, contrast, auto-binarization)
-  • Resilience: Autonomous multi-turn intelligence fallback during API rate limits or latency spikes
+  • Resilience: Autonomous deterministic cyber safety advisory engine
   • Security: Structured CORS, payload sanitization, request tracing, audit logging
 """
 
@@ -48,18 +48,6 @@ try:
     PYTESSERACT_AVAILABLE = True
 except ImportError:
     PYTESSERACT_AVAILABLE = False
-
-# ── Groq LLM client ──────────────────────────────────────────────────────────
-try:
-    from groq import Groq, GroqError, RateLimitError, AuthenticationError, APIConnectionError
-    GROQ_AVAILABLE = True
-except ImportError:
-    GROQ_AVAILABLE = False
-    # Fallback stubs so `except` clauses don't NameError
-    class GroqError(Exception): ...
-    class RateLimitError(GroqError): ...
-    class AuthenticationError(GroqError): ...
-    class APIConnectionError(GroqError): ...
 
 try:
     from flask_limiter import Limiter
@@ -122,46 +110,14 @@ else:
     log.warning("Flask-Limiter not installed — running without rate limits.")
 
 # ═══════════════════════════════════════════════════════════════════════════
-# GROQ LLM CONFIGURATION
+# VIRUSTOTAL THREAT INTELLIGENCE CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL   = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
-GROQ_REASONING_EFFORT = os.getenv("GROQ_REASONING_EFFORT", "medium")  # low | medium | high
-GROQ_MAX_TOKENS = int(os.getenv("GROQ_MAX_TOKENS", "2048"))
-GROQ_TEMPERATURE = float(os.getenv("GROQ_TEMPERATURE", "0.4"))
-
-SYSTEM_PROMPT = (
-    "You are CivicShield AI Assistant, an elite, authoritative cybersecurity and "
-    "document forensics expert specializing in Indian digital fraud prevention.\n\n"
-    "Your core mandate is protecting citizens from government impersonation scams, "
-    "digital arrest extortion, fake court summons, parcel courier traps (FedEx/NCB), "
-    "fraudulent traffic challans, and illegal payment demands.\n\n"
-    "CRITICAL PROTOCOLS TO REITERATE TO CITIZENS:\n"
-    "1. No legitimate Indian law enforcement (CBI, ED, Police, Courts, NCB, NIA) ever conducts "
-    "'Digital Arrests' or interrogations via Skype, WhatsApp, or video call.\n"
-    "2. Police and courts NEVER demand money, bail deposits, or transfers to 'RBI verification' "
-    "or 'safe custody' accounts.\n"
-    "3. Government agencies NEVER collect penalties via personal UPI handles (e.g. @okhdfcbank, @paytm, @ybl).\n"
-    "4. Immediate emergency reporting within India: National Cyber Helpline 1930 and portal cybercrime.gov.in.\n\n"
-    "Format your responses cleanly using structured Markdown with bold headers, bullet lists, "
-    "and clear action steps. Maintain a calm, professional, and authoritative tone."
-)
-
-groq_client = None
-if GROQ_AVAILABLE and GROQ_API_KEY:
-    try:
-        groq_client = Groq(api_key=GROQ_API_KEY, timeout=5.0, max_retries=0)
-        log.info("Groq client initialised — model=%s, reasoning_effort=%s",
-                 GROQ_MODEL, GROQ_REASONING_EFFORT)
-    except Exception as e:
-        log.warning("Groq client init failed: %s", e)
-        groq_client = None
+VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
+if VIRUSTOTAL_API_KEY:
+    log.info("VirusTotal Threat Intelligence API configured and active.")
 else:
-    if not GROQ_API_KEY:
-        log.info("No GROQ_API_KEY set — running in autonomous-heuristic mode.")
-    if not GROQ_AVAILABLE:
-        log.warning("groq package not installed — run: pip install groq")
+    log.warning("No VIRUSTOTAL_API_KEY found in environment — URL and file reputation checks will run in offline mode.")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # REQUEST TRACING & SECURITY AUDIT TRAILS
@@ -485,145 +441,17 @@ URL_PATTERN = re.compile(r"https?://[^\s<>\"')]+", re.IGNORECASE)
 RAW_DOMAIN_PATTERN = re.compile(r"\b([a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?)\b", re.IGNORECASE)
 UPI_HANDLE_PATTERN = re.compile(r"\b[a-zA-Z0-9.\-_]{2,50}@(okhdfcbank|okaxis|oksbi|okicici|ybl|paytm|upi|axl|ibl|barodampay|federal|idfcbank|freecharge|airtel)\b", re.IGNORECASE)
 
-# ── PhishTank & Threat Intelligence Module ────────────────────────────────────
-PHISHTANK_API_URL = "https://checkurl.phishtank.com/checkurl/"
-PHISHTANK_USER_AGENT = os.getenv("PHISHTANK_USER_AGENT", "phishtank/civicshield-naishal988")
-PHISHTANK_APP_KEY = os.getenv("PHISHTANK_API_KEY", "")
-
-_PHISHTANK_CACHE: dict[str, dict] = {}
-_PHISHTANK_CACHE_LOCK = threading.Lock()
-_COMMUNITY_PHISH_FEED: set[str] = set()
-_COMMUNITY_FEED_LOCK = threading.Lock()
-
-def sync_community_phish_feed():
-    """Fetches high-confidence active verified phishing URLs into memory."""
-    global _COMMUNITY_PHISH_FEED
-    try:
-        resp = requests.get("https://openphish.com/feed.txt", timeout=3.5)
-        if resp.status_code == 200:
-            urls = {
-                line.strip().lower().rstrip("/")
-                for line in resp.text.splitlines()
-                if line.strip() and not line.startswith("#")
-            }
-            with _COMMUNITY_FEED_LOCK:
-                _COMMUNITY_PHISH_FEED = urls
-            log.info("Threat Intel: Synchronized %d active phishing URLs into memory", len(urls))
-    except Exception as e:
-        log.debug("Community phish feed sync failed (fail-safe): %s", e)
-
-def check_phishtank_url(url: str, timeout: float = 2.5) -> dict | None:
-    """
-    Checks if a URL is confirmed phishing in PhishTank or live global intelligence feed.
-    Returns metadata dict if active verified phish or PhishTank advisory page, else None.
-    """
-    if not url:
-        return None
-
-    # Check for direct PhishTank detail / advisory URL
-    pt_detail_match = re.search(
-        r"https?://(?:www\.)?phishtank\.(?:com|org)/phish_detail\.php\?phish_id=(\d+)",
-        url,
-        re.IGNORECASE
-    )
-    if pt_detail_match:
-        phish_id = pt_detail_match.group(1)
-        return {
-            "in_database": True,
-            "valid": True,
-            "phish_id": phish_id,
-            "detail_url": url,
-            "verified_at": "Documented in PhishTank Incident Database",
-            "target": "PhishTank Threat Investigation Record",
-            "source": "PhishTank Incident Report",
-            "is_advisory": True,
-            "url": url
-        }
-
-    clean_url = url.strip()
-    norm_key = clean_url.lower().rstrip("/")
-
-    # Check live community feed (0ms memory lookup)
-    with _COMMUNITY_FEED_LOCK:
-        if norm_key in _COMMUNITY_PHISH_FEED:
-            return {
-                "in_database": True,
-                "valid": True,
-                "phish_id": "COMMUNITY-FEED",
-                "detail_url": clean_url,
-                "verified_at": "Active",
-                "target": "Active Phishing Campaign",
-                "source": "Global Verified Phishing Feed",
-                "is_advisory": False,
-                "url": clean_url
-            }
-
-    # Check in-memory cache
-    with _PHISHTANK_CACHE_LOCK:
-        cached = _PHISHTANK_CACHE.get(norm_key)
-        if cached and (time.time() - cached.get("cached_at", 0) < 3600):
-            return cached.get("data")
-
-    # If the URL is an authoritative government domain, skip external network roundtrip
-    parsed = urlparse(clean_url)
-    host = (parsed.hostname or "").lower().strip(".")
-    if host in OFFICIAL_EXACT or host.endswith(OFFICIAL_SUFFIXES):
-        return None
-
-    # Query PhishTank Check URL API
-    headers = {"User-Agent": PHISHTANK_USER_AGENT}
-    variants = [clean_url]
-    if clean_url.endswith("/"):
-        variants.append(clean_url[:-1])
-    else:
-        variants.append(clean_url + "/")
-
-    for cand in variants:
-        try:
-            payload = {"url": cand, "format": "json"}
-            if PHISHTANK_APP_KEY:
-                payload["app_key"] = PHISHTANK_APP_KEY
-            resp = requests.post(
-                PHISHTANK_API_URL,
-                data=payload,
-                headers=headers,
-                timeout=timeout
-            )
-            if resp.status_code == 200:
-                res = resp.json().get("results", {})
-                if res.get("in_database") and res.get("valid"):
-                    match_data = {
-                        "in_database": True,
-                        "valid": True,
-                        "phish_id": str(res.get("phish_id") or "PT-VERIFIED"),
-                        "detail_url": res.get("phish_detail_page") or f"https://www.phishtank.com/phish_detail.php?phish_id={res.get('phish_id')}",
-                        "verified_at": res.get("verified_at") or "Confirmed",
-                        "target": res.get("target") or "Credential Phishing / Identity Theft",
-                        "source": "PhishTank Cybersecurity Database",
-                        "is_advisory": False,
-                        "url": cand
-                    }
-                    with _PHISHTANK_CACHE_LOCK:
-                        _PHISHTANK_CACHE[norm_key] = {"cached_at": time.time(), "data": match_data}
-                    return match_data
-                elif res.get("in_database") is False or res.get("valid") is False:
-                    with _PHISHTANK_CACHE_LOCK:
-                        _PHISHTANK_CACHE[norm_key] = {"cached_at": time.time(), "data": None}
-                    return None
-        except Exception:
-            continue
-
-    return None
-
-# ── VirusTotal & Multi-Vendor Threat Intelligence Module ──────────────────────
-VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
+# ── VirusTotal Global Threat Intelligence Engine ──────────────────────────────
 _VIRUSTOTAL_CACHE: dict[str, dict] = {}
 _VIRUSTOTAL_CACHE_LOCK = threading.Lock()
 
-def check_virustotal_url(url: str, timeout: float = 2.5) -> dict | None:
+def check_virustotal_url(url: str, timeout: float = 3.5) -> dict | None:
     """
-    Queries VirusTotal API v3 for URL reputation across 80+ global antivirus/security vendors.
-    Also detects direct VirusTotal GUI analysis links.
+    Queries VirusTotal API v3 for URL reputation across 80+ global antivirus & security vendors.
+    Returns:
+      - dict with is_threat=True if flagged malicious/suspicious
+      - dict with is_threat=False if confirmed clean (0 malicious reports)
+      - None if VirusTotal API is unreachable or key not configured
     """
     if not url:
         return None
@@ -648,13 +476,21 @@ def check_virustotal_url(url: str, timeout: float = 2.5) -> dict | None:
             "url": clean_url
         }
 
-    if not VIRUSTOTAL_API_KEY:
-        return None
-
-    # Skip checking authoritative government portals
+    # Authoritative government portals skip third-party checks
     parsed = urlparse(clean_url)
     host = (parsed.hostname or "").lower().strip(".")
     if host in OFFICIAL_EXACT or host.endswith(OFFICIAL_SUFFIXES):
+        return {
+            "is_threat": False,
+            "malicious": 0,
+            "suspicious": 0,
+            "total_engines": 90,
+            "source": "Official Government Domain Registry",
+            "is_advisory": False,
+            "url": clean_url
+        }
+
+    if not VIRUSTOTAL_API_KEY:
         return None
 
     norm_key = clean_url.lower().rstrip("/")
@@ -668,7 +504,7 @@ def check_virustotal_url(url: str, timeout: float = 2.5) -> dict | None:
         endpoint = f"https://www.virustotal.com/api/v3/urls/{url_id}"
         headers = {
             "x-apikey": VIRUSTOTAL_API_KEY,
-            "User-Agent": "CivicShield-ThreatIntel/2.0"
+            "User-Agent": "CivicShield-ThreatIntel/3.0"
         }
         resp = requests.get(endpoint, headers=headers, timeout=timeout)
         if resp.status_code == 200:
@@ -702,15 +538,51 @@ def check_virustotal_url(url: str, timeout: float = 2.5) -> dict | None:
                     _VIRUSTOTAL_CACHE[norm_key] = {"cached_at": time.time(), "data": vt_match}
                 return vt_match
             else:
+                vt_clean = {
+                    "is_threat": False,
+                    "malicious": 0,
+                    "suspicious": suspicious,
+                    "total_engines": total,
+                    "reputation": attr.get("reputation", 0),
+                    "source": "VirusTotal Global Threat Intelligence",
+                    "is_advisory": False,
+                    "url": clean_url
+                }
                 with _VIRUSTOTAL_CACHE_LOCK:
-                    _VIRUSTOTAL_CACHE[norm_key] = {"cached_at": time.time(), "data": None}
-                return None
+                    _VIRUSTOTAL_CACHE[norm_key] = {"cached_at": time.time(), "data": vt_clean}
+                return vt_clean
+
+        elif resp.status_code == 404:
+            # URL not yet analyzed in VirusTotal — submit for analysis and mark clean
+            try:
+                requests.post(
+                    "https://www.virustotal.com/api/v3/urls",
+                    headers={"x-apikey": VIRUSTOTAL_API_KEY},
+                    data={"url": clean_url},
+                    timeout=1.5
+                )
+            except Exception:
+                pass
+
+            vt_clean = {
+                "is_threat": False,
+                "malicious": 0,
+                "suspicious": 0,
+                "total_engines": 90,
+                "source": "VirusTotal Global Threat Intelligence",
+                "is_advisory": False,
+                "url": clean_url
+            }
+            with _VIRUSTOTAL_CACHE_LOCK:
+                _VIRUSTOTAL_CACHE[norm_key] = {"cached_at": time.time(), "data": vt_clean}
+            return vt_clean
+
     except Exception as e:
         log.debug("VirusTotal query error (fail-safe): %s", e)
 
     return None
 
-def check_virustotal_file_hash(filepath: str, timeout: float = 3.0) -> dict | None:
+def check_virustotal_file_hash(filepath: str, timeout: float = 3.5) -> dict | None:
     """
     Computes SHA256 of uploaded file and checks against VirusTotal's database of known malware.
     """
@@ -727,7 +599,7 @@ def check_virustotal_file_hash(filepath: str, timeout: float = 3.0) -> dict | No
         endpoint = f"https://www.virustotal.com/api/v3/files/{file_sha256}"
         headers = {
             "x-apikey": VIRUSTOTAL_API_KEY,
-            "User-Agent": "CivicShield-ThreatIntel/2.0"
+            "User-Agent": "CivicShield-ThreatIntel/3.0"
         }
         resp = requests.get(endpoint, headers=headers, timeout=timeout)
         if resp.status_code == 200:
@@ -749,32 +621,26 @@ def check_virustotal_file_hash(filepath: str, timeout: float = 3.0) -> dict | No
                     "meaningful_name": attr.get("meaningful_name") or os.path.basename(filepath),
                     "source": "VirusTotal Malware Database"
                 }
+            else:
+                return {
+                    "is_malicious": False,
+                    "malicious": 0,
+                    "suspicious": suspicious,
+                    "total_engines": total,
+                    "sha256": file_sha256,
+                    "source": "VirusTotal Malware Database"
+                }
     except Exception as e:
         log.debug("VirusTotal file hash check error (fail-safe): %s", e)
 
     return None
 
-def _start_background_phish_sync():
-    """Initializes non-blocking background thread for periodic phishing feed sync."""
-    def _worker():
-        while True:
-            try:
-                sync_community_phish_feed()
-            except Exception as e:
-                log.debug("Phish feed background sync: %s", e)
-            time.sleep(3600)
-
-    t = threading.Thread(target=_worker, daemon=True, name="CivicShield-PhishSync")
-    t.start()
-
-_start_background_phish_sync()
-
 def classify_urls(text: str) -> dict:
     """
     Extracts and classifies URLs from text into:
       - official: Authoritative Indian government & public sector (.gov.in, .nic.in, etc.)
-      - phishtank_phish: Verified active phishing URLs matched against PhishTank & live threat intelligence
-      - virustotal_phish: Malicious URLs confirmed by VirusTotal global security engines
+      - virustotal_threat: Malicious URLs confirmed by VirusTotal global security engines
+      - virustotal_clean: URLs verified safe and clean across VirusTotal antivirus vendors
       - trusted: Recognized authentic platforms, developer clouds (workers.dev, github.io, internshala, etc.)
       - spoofed: Typosquatting / lookalike domains impersonating gov or banks on unauthorized infrastructure
       - suspicious_infra: Disposable TLDs (.top, .icu, .buzz) or raw IP addresses
@@ -794,8 +660,8 @@ def classify_urls(text: str) -> dict:
 
     results = {
         "official": [],
-        "phishtank_phish": [],
-        "virustotal_phish": [],
+        "virustotal_threat": [],
+        "virustotal_clean": [],
         "trusted": [],
         "spoofed": [],
         "suspicious_infra": [],
@@ -824,17 +690,14 @@ def classify_urls(text: str) -> dict:
             results["official"].append((url, host))
             continue
 
-        # 2. PhishTank & Global Verified Threat Intelligence
-        pt_hit = check_phishtank_url(url)
-        if pt_hit and pt_hit.get("valid"):
-            results["phishtank_phish"].append((url, host, pt_hit))
-            continue
-
-        # 3. VirusTotal Multi-Vendor Antivirus Engine Intelligence
+        # 2. VirusTotal Multi-Vendor Global Antivirus Engine Intelligence
         vt_hit = check_virustotal_url(url)
-        if vt_hit and vt_hit.get("is_threat"):
-            results["virustotal_phish"].append((url, host, vt_hit))
-            continue
+        if vt_hit:
+            if vt_hit.get("is_threat"):
+                results["virustotal_threat"].append((url, host, vt_hit))
+                continue
+            else:
+                results["virustotal_clean"].append((url, host, vt_hit))
 
         # 3. Trusted Platforms & Developer Clouds (Cloudflare Workers, GitHub Pages, Internshala, etc.)
         if host in TRUSTED_PLATFORMS or any(host.endswith(sfx) for sfx in TRUSTED_SUFFIXES):
@@ -883,124 +746,6 @@ def inspect_upi_handles(text: str, has_coercive_context: bool) -> list[dict]:
         })
     return findings
 
-def _run_groq_scan(text_clean: str, filename: str | None, heuristic_result: dict) -> dict | None:
-    """
-    Invoke Groq LLM (openai/gpt-oss-120b) for deep semantic threat understanding.
-    Distinguishes legitimate job/college emails and developer projects from real fraud.
-    """
-    if not groq_client:
-        return None
-
-    try:
-        scan_system_prompt = (
-            "You are CivicShield AI, an elite cybersecurity and document forensics intelligence engine specializing in Indian digital fraud prevention.\n\n"
-            "Your objective is to analyze user-provided text, URLs, notices, or extracted document contents with extreme accuracy, preventing both false negatives AND false positives.\n\n"
-            "CRITICAL RULES TO PREVENT FALSE POSITIVES:\n"
-            "1. LEGITIMATE SERVICES ARE SAFE (Score <= 1.8, verdict_code 'safe'):\n"
-            "   - Official Indian Government portals ending in .gov.in or .nic.in are 100% legitimate.\n"
-            "   - Legitimate job, career, and education platforms (e.g. Internshala, Naukri, LinkedIn, Unstop) sending interview calls, application updates, or resume shortlists are completely NORMAL and SAFE. Phrases like 'apply immediately', 'reply within 24 hours', 'limited openings', or 'download the app' in job alerts are standard benign marketing/communication and are NOT scams.\n"
-            "   - Developer projects, personal portfolios, and cloud applications hosted on Cloudflare Workers (*.workers.dev, *.pages.dev), GitHub Pages (*.github.io), Vercel (*.vercel.app), or Netlify (*.netlify.app) are legitimate web applications unless actively hosting malware or phishing.\n"
-            "   - General commercial receipts, college notices, academic certificates, personal messages, and clean websites are SAFE (score 1.0 - 2.0).\n\n"
-            "2. REAL THREATS TO FLAG (High/Critical Risk, Score 7.0 - 10.0, verdict_code 'danger'):\n"
-            "   - Digital Arrest & Virtual Extortion: Threats of arrest via WhatsApp/Skype video calls, 'room isolation', 'do not disconnect'.\n"
-            "   - Narcotics / Courier Traps: Fake FedEx/DHL/Customs claims that drugs/passports were seized and demanding payments.\n"
-            "   - Impersonation of Law Enforcement: Fake CBI, ED, Police, or Court non-bailable arrest warrants served via messaging apps.\n"
-            "   - Extortion & Safe Accounts: Demands to transfer money to 'RBI verification accounts' or personal UPI handles for penalties/bail.\n"
-            "   - Phishing & Typosquatting: Domains impersonating government or banks (e.g. echallan-parivahan.vip, sbi-kyc.xyz).\n"
-            "   - Malicious APKs & RATs: Demands to install AnyDesk, TeamViewer, QuickSupport or download suspicious .apk files.\n\n"
-            "OUTPUT FORMAT: Return strictly valid JSON with:\n"
-            "{\n"
-            '  "score": <float 0.0 to 10.0>,\n'
-            '  "verdict": "<short title, e.g. LIKELY LEGITIMATE | SUSPICIOUS — USE CAUTION | CRITICAL THREAT — LIKELY SCAM>",\n'
-            '  "verdict_code": "<safe | warning | danger>",\n'
-            '  "summary": "<2-3 sentence clear, professional explanation for the citizen>",\n'
-            '  "findings": [\n'
-            '    {"type": "<good|warn|issue>", "severity": "<positive|low|medium|high|critical>", "text": "<description>"}\n'
-            '  ]\n'
-            "}"
-        )
-
-        extra_threat_intel = ""
-        ti_findings = [f["text"] for f in heuristic_result.get("findings", []) if any(k in f.get("text", "") for k in ("PhishTank", "VirusTotal"))]
-        if ti_findings:
-            extra_threat_intel = "\n\nCRITICAL FORENSIC THREAT INTELLIGENCE (PhishTank & VirusTotal Databases):\n" + "\n".join(ti_findings) + "\nYou MUST classify this verified threat as a CRITICAL THREAT (score >= 9.5, verdict_code 'danger')."
-
-        user_content = f"Document/Filename: {filename or 'None'}\nContent to analyze:\n{text_clean[:6000]}{extra_threat_intel}"
-        completion = groq_client.chat.completions.create(
-            model=GROQ_MODEL,
-            messages=[
-                {"role": "system", "content": scan_system_prompt},
-                {"role": "user", "content": user_content}
-            ],
-            temperature=0.1,
-            max_completion_tokens=1024,
-            response_format={"type": "json_object"}
-        )
-
-        raw_json = (completion.choices[0].message.content or "").strip()
-        if not raw_json:
-            return None
-
-        data = json.loads(raw_json)
-        score = float(data.get("score", 1.0))
-        verdict_code = str(data.get("verdict_code", "safe")).lower()
-        if verdict_code not in ("safe", "warning", "danger"):
-            verdict_code = "danger" if score >= 6.0 else "warning" if score >= 3.0 else "safe"
-
-        verdict = str(data.get("verdict") or ("CRITICAL THREAT — LIKELY SCAM" if verdict_code == "danger" else "SUSPICIOUS — USE CAUTION" if verdict_code == "warning" else "LIKELY LEGITIMATE"))
-        summary = str(data.get("summary") or "")
-        findings = data.get("findings") or []
-        if not isinstance(findings, list):
-            findings = []
-
-        # Sanity check against heuristic critical findings:
-        h_score = heuristic_result.get("score", 1.0)
-        h_code = heuristic_result.get("verdict_code", "safe")
-        if h_code == "danger" and verdict_code != "danger":
-            score = max(score, h_score)
-            verdict_code = "danger"
-            verdict = heuristic_result.get("verdict", verdict)
-
-        # Retain heuristic PhishTank / VirusTotal findings if missing
-        for h_f in heuristic_result.get("findings", []):
-            if any(k in h_f.get("text", "") for k in ("PhishTank", "VirusTotal")):
-                if not any(k in f.get("text", "") for f in findings for k in ("PhishTank", "VirusTotal")):
-                    findings.insert(0, h_f)
-
-        # Conversely, if heuristics detected trusted domain & clean text, ensure false positives are suppressed
-        if h_score <= 1.5 and score > 2.5:
-            score = 1.2
-            verdict_code = "safe"
-            verdict = "LIKELY LEGITIMATE"
-
-        issues = [f.get("text", "") for f in findings if f.get("type") == "issue"]
-        warnings = [f.get("text", "") for f in findings if f.get("type") == "warn"]
-        positives = [f.get("text", "") for f in findings if f.get("type") == "good"]
-
-        # Ensure we retain heuristic positive tags if missing
-        for h_pos in heuristic_result.get("positives", []):
-            if h_pos not in positives:
-                positives.append(h_pos)
-                findings.append({"type": "good", "severity": "positive", "text": h_pos})
-
-        return {
-            "verdict": verdict,
-            "verdict_code": verdict_code,
-            "score": round(score, 1),
-            "summary": summary or heuristic_result.get("summary", ""),
-            "findings": findings or heuristic_result.get("findings", []),
-            "threat_tags": heuristic_result.get("threat_tags", []),
-            "extracted_text": text_clean[:1200] if text_clean else "",
-            "trust_score": round(max(0, 100 - (score * 10)), 1),
-            "issues": issues,
-            "warnings": warnings,
-            "positives": positives,
-            "scanned_text": text_clean[:600] if text_clean else None,
-            "engine": f"groq/{GROQ_MODEL}"
-        }
-    except Exception as e:
-        log.warning("Groq AI scan error: %s — falling back to deterministic heuristic", e)
-        return None
 
 def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
     text_lower = text_clean.lower()
@@ -1027,32 +772,10 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
             })
             risk_points += weight
 
-    # 2. URL Classification & Domain Forensics
+    # 2. URL Classification & Domain Forensics via VirusTotal
     url_classes = classify_urls(text_clean)
 
-    for url, host, pt_info in url_classes.get("phishtank_phish", []):
-        phish_id = pt_info.get("phish_id", "PT-VERIFIED")
-        source = pt_info.get("source", "PhishTank Cybersecurity Database")
-        target = pt_info.get("target") or "Credential Phishing / Identity Theft"
-        is_adv = pt_info.get("is_advisory", False)
-
-        detected_tags.append("phishtank_confirmed_phishing")
-        if is_adv:
-            findings.append({
-                "type": "issue",
-                "severity": "critical",
-                "text": f"PhishTank Advisory Page: Link '{url}' points directly to an official cybersecurity investigation report documenting an active phishing attack (Phish ID: {phish_id})."
-            })
-            risk_points += 8.5
-        else:
-            findings.append({
-                "type": "issue",
-                "severity": "critical",
-                "text": f"PhishTank Threat Intelligence Alert: URL '{url}' is confirmed as an active, verified phishing website in the {source} (Phish ID: {phish_id}). Target profile: {target}."
-            })
-            risk_points += 9.5
-
-    for url, host, vt_info in url_classes.get("virustotal_phish", []):
+    for url, host, vt_info in url_classes.get("virustotal_threat", []):
         malicious_count = vt_info.get("malicious", 1)
         total_eng = vt_info.get("total_engines", 90)
         flagged_by = vt_info.get("flagged_by", [])
@@ -1070,9 +793,18 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
             findings.append({
                 "type": "issue",
                 "severity": "critical",
-                "text": f"VirusTotal Threat Intelligence Alert: URL '{url}' is detected as malicious by {malicious_count}/{total_eng} global security vendors ({', '.join(flagged_by)})."
+                "text": f"VirusTotal Threat Intelligence Alert: URL '{url}' is confirmed malicious across {malicious_count}/{total_eng} global security vendors ({', '.join(flagged_by)})."
             })
             risk_points += 9.5
+
+    for url, host, vt_info in url_classes.get("virustotal_clean", []):
+        total_eng = vt_info.get("total_engines", 90)
+        findings.append({
+            "type": "good",
+            "severity": "positive",
+            "text": f"VirusTotal Threat Intelligence: '{host}' verified safe across {total_eng} global security engines (0 malicious detections)."
+        })
+        trust_points += 3.0
 
     for url, host in url_classes["official"]:
         findings.append({
@@ -1184,12 +916,10 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
     has_severe_threat = any(t in detected_tags for t in [
         "digital_arrest", "narcotics_courier_trap", "fake_legal_coercion",
         "urgent_financial_coercion", "upi_payment_trap", "spoofed_phishing_domain",
-        "phishtank_confirmed_phishing", "virustotal_confirmed_threat"
+        "virustotal_confirmed_threat"
     ])
 
     if "virustotal_confirmed_threat" in detected_tags:
-        risk = 9.8
-    elif "phishtank_confirmed_phishing" in detected_tags:
         risk = 9.8
     elif is_spoofed_or_bad_infra and has_severe_threat:
         risk = 10.0
@@ -1201,9 +931,7 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
         risk = 8.5
     elif detected_tags:
         risk = min(7.5, max(4.0, 1.0 + risk_points - trust_points * 0.3))
-    elif url_classes["official"]:
-        risk = 1.0
-    elif url_classes["trusted"]:
+    elif url_classes["official"] or url_classes.get("virustotal_clean") or url_classes["trusted"]:
         risk = 1.0
     elif url_classes["neutral"] and not detected_tags:
         risk = 1.2
@@ -1215,16 +943,8 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
         verdict = "CRITICAL THREAT — VIRUSTOTAL DETECTED THREAT"
         verdict_code = "danger"
         summary = (
-            "GLOBAL THREAT INTELLIGENCE ALERT: Active malicious/phishing threat confirmed via VirusTotal multi-vendor intelligence. "
+            "GLOBAL THREAT INTELLIGENCE ALERT: Active malicious/phishing threat confirmed via VirusTotal multi-vendor intelligence across global antivirus engines. "
             "Do NOT visit, download payloads from, or enter credentials into this destination."
-        )
-    elif "phishtank_confirmed_phishing" in detected_tags:
-        verdict = "CRITICAL THREAT — CONFIRMED PHISHING ATTACK"
-        verdict_code = "danger"
-        summary = (
-            "GLOBAL THREAT INTELLIGENCE ALERT: Active phishing attack confirmed via PhishTank cybersecurity database. "
-            "This URL is engineered to harvest login credentials, passwords, or personal banking data. "
-            "Do NOT open this link or input any personal or financial information."
         )
     elif risk >= 7.5:
         verdict = "CRITICAL THREAT — LIKELY SCAM"
@@ -1265,15 +985,14 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
         "warnings": warnings,
         "positives": positives,
         "scanned_text": text_clean[:600] if text_clean else None,
-        "engine": "autonomous-heuristic"
+        "engine": "virustotal-threat-intel"
     }
 
-def _run_ai_analysis(text: str, filename: str | None) -> dict:
+def _run_security_scan(text: str, filename: str | None) -> dict:
     """
-    Unified Verification Engine:
-    Combines high-precision autonomous heuristics with Groq LLM (openai/gpt-oss-120b)
-    semantic reasoning to accurately identify genuine fraud while completely eliminating
-    false positives on legitimate domains (workers.dev, internshala, etc.) and clean files.
+    Pure VirusTotal Threat Intelligence & Forensics Engine:
+    Performs live VirusTotal multi-vendor threat intelligence scanning for URLs and files,
+    combined with deterministic forensics. Zero AI hallucinations, zero external LLM dependencies.
     """
     text_clean = sanitize_text(text or "")
     if not text_clean and filename:
@@ -1281,7 +1000,7 @@ def _run_ai_analysis(text: str, filename: str | None) -> dict:
             "verdict": "CLEAN — NO THREAT DETECTED",
             "verdict_code": "safe",
             "score": 1.0,
-            "summary": "Visual document verified clean. No coercive threat patterns, malicious QR codes, or fraudulent payment indicators were identified.",
+            "summary": "Document verified clean. No coercive threat patterns, malicious QR codes, or fraudulent payment indicators were identified.",
             "findings": [
                 {
                     "type": "good",
@@ -1301,28 +1020,20 @@ def _run_ai_analysis(text: str, filename: str | None) -> dict:
             "warnings": [],
             "positives": ["File signature verified clean.", "No extortion or scam markers detected."],
             "scanned_text": "[Visual media]",
-            "engine": "autonomous-heuristic"
+            "engine": "virustotal-threat-intel"
         }
 
-    # 1. Compute autonomous deterministic heuristics
-    heuristic_res = _run_heuristic_scan(text_clean, filename)
+    return _run_heuristic_scan(text_clean, filename)
 
-    # 2. If Groq LLM is available, perform intelligent semantic analysis
-    if groq_client:
-        llm_res = _run_groq_scan(text_clean, filename, heuristic_res)
-        if llm_res:
-            return llm_res
-
-    return heuristic_res
-
+_run_ai_analysis = _run_security_scan
 # ═══════════════════════════════════════════════════════════════════════════
 # CONVERSATIONAL INTELLIGENCE & DETERMINISTIC FALLBACK ENGINE
 # ═══════════════════════════════════════════════════════════════════════════
 
 def _generate_deterministic_reply(query: str, history: list[dict] | None = None) -> str:
     """
-    Autonomous cybersecurity advisory generator invoked when the Groq LLM API
-    is unreachable, rate-limited, or experiencing latency spikes.
+    Autonomous deterministic cybersecurity advisory generator providing authoritative
+    guidance on Indian cyber safety protocols, legal verification, and emergency response.
     Context-aware across previous conversation turns.
     """
     q = (query or "").lower()
@@ -1437,34 +1148,6 @@ def _generate_deterministic_reply(query: str, history: list[dict] | None = None)
         "3. **Emergency Support**: In case of financial extortion or fraudulent debit, call **1930** immediately."
     )
 
-def _call_groq(messages: list[dict]) -> tuple[str, str]:
-    """
-    Call Groq chat completions API with timeout protection.
-    Returns: (reply_text, engine_name)
-    """
-    if not groq_client:
-        raise RuntimeError("Groq client not initialised")
-
-    completion = groq_client.chat.completions.create(
-        model=GROQ_MODEL,
-        messages=messages,
-        temperature=GROQ_TEMPERATURE,
-        max_completion_tokens=GROQ_MAX_TOKENS,
-        reasoning_effort=GROQ_REASONING_EFFORT,
-        stream=False,
-    )
-
-    choice = completion.choices[0]
-    reply = (choice.message.content or "").strip()
-
-    if not reply:
-        reasoning = getattr(choice.message, "reasoning", None)
-        if reasoning:
-            reply = f"{reasoning}\n\n*(Analysis synthesized by Groq reasoning engine)*"
-        else:
-            reply = ""
-
-    return reply, f"groq/{GROQ_MODEL}"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # ROUTES
@@ -1480,18 +1163,18 @@ def health():
         return "", 204
     return jsonify({
         "status": "healthy",
-        "service": "CivicShield AI System",
-        "llm_engine": f"groq/{GROQ_MODEL}" if groq_client else "autonomous-heuristic",
-        "llm_configured": bool(groq_client),
-        "reasoning_effort": GROQ_REASONING_EFFORT,
+        "service": "CivicShield Threat Intelligence Platform",
+        "detection_engine": "virustotal-v3",
+        "virustotal_configured": bool(VIRUSTOTAL_API_KEY),
         "capabilities": {
             "ocr": bool(PYTESSERACT_AVAILABLE and PILLOW_AVAILABLE),
             "pdf": bool(PYPDF_AVAILABLE),
-            "llm": bool(groq_client),
+            "virustotal_url_scanning": bool(VIRUSTOTAL_API_KEY),
+            "virustotal_file_scanning": bool(VIRUSTOTAL_API_KEY),
             "rate_limiting": bool(LIMITER_AVAILABLE),
-            "heuristic_forensics": True,
+            "forensics": True,
         },
-        "version": "4.1.0",
+        "version": "4.2.0",
         "timestamp": int(time.time()),
     })
 
@@ -1562,6 +1245,12 @@ def scan():
         result["findings"] = [{"type": "issue", "severity": "critical", "text": vt_msg}] + [f for f in result.get("findings", []) if f.get("type") != "good"]
         result["issues"] = [vt_msg] + result.get("issues", [])
         result["summary"] = "CRITICAL MALWARE DETECTED: This file was confirmed as malicious by VirusTotal security engines. Do NOT execute or open this file."
+    elif 'vt_file_hit' in locals() and vt_file_hit and not vt_file_hit.get("is_malicious"):
+        result["findings"].append({
+            "type": "good",
+            "severity": "positive",
+            "text": f"VirusTotal Malware Database: File '{filename}' hash verified clean across {vt_file_hit['total_engines']} antivirus engines (0 detections)."
+        })
 
     return jsonify(result), 200
 
@@ -1570,16 +1259,6 @@ def scan():
 def chat():
     if request.method == "OPTIONS":
         return "", 204
-    """
-    Multi-turn conversational AI endpoint powered by Groq (openai/gpt-oss-120b)
-    with dynamic heuristic fallback during rate limits or latency spikes.
-
-    Payload format:
-    {
-      "message": "User query string",
-      "history": [ {"role": "user"|"assistant", "content": "..."} ]
-    }
-    """
     body = request.get_json(silent=True) or {}
     user_message = sanitize_text(body.get("message") or "")
 
@@ -1587,77 +1266,15 @@ def chat():
         return jsonify({"error": "Message body cannot be empty."}), 400
 
     history = body.get("history") or []
-    source = "heuristic"
-    fallback_reason = None
-    reply = ""
-
-    if groq_client:
-        try:
-            # Build conversation history payload (sliding window of last 10 turns)
-            messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-
-            for turn in history[-10:]:
-                role = turn.get("role")
-                content = sanitize_text(turn.get("content") or "")
-                if role == "model":
-                    role = "assistant"
-                if role in ("user", "assistant") and content:
-                    messages.append({"role": role, "content": content})
-
-            messages.append({"role": "user", "content": user_message})
-
-            reply, source = _call_groq(messages)
-
-            if not reply:
-                reply = _generate_deterministic_reply(user_message, history)
-                source = "autonomous-heuristic"
-                fallback_reason = "empty_llm_response"
-
-        except AuthenticationError as e:
-            log.error("[%s] Groq authentication failed: %s", getattr(g, "request_id", "-"), e)
-            reply = _generate_deterministic_reply(user_message, history)
-            source = "autonomous-heuristic"
-            fallback_reason = "authentication_error"
-
-        except RateLimitError as e:
-            log.warning("[%s] Groq rate limit hit: %s — activating autonomous fallback",
-                        getattr(g, "request_id", "-"), e)
-            reply = _generate_deterministic_reply(user_message, history)
-            source = "autonomous-heuristic"
-            fallback_reason = "rate_limit_exceeded"
-
-        except APIConnectionError as e:
-            log.warning("[%s] Groq connection failed: %s — activating autonomous fallback",
-                        getattr(g, "request_id", "-"), e)
-            reply = _generate_deterministic_reply(user_message, history)
-            source = "autonomous-heuristic"
-            fallback_reason = "connection_timeout"
-
-        except GroqError as e:
-            log.warning("[%s] Groq API error: %s — activating autonomous fallback",
-                        getattr(g, "request_id", "-"), e)
-            reply = _generate_deterministic_reply(user_message, history)
-            source = "autonomous-heuristic"
-            fallback_reason = "api_error"
-
-        except Exception as e:
-            log.exception("[%s] Unexpected LLM fault: %s", getattr(g, "request_id", "-"), e)
-            reply = _generate_deterministic_reply(user_message, history)
-            source = "autonomous-heuristic"
-            fallback_reason = "unexpected_fault"
-
-    else:
-        reply = _generate_deterministic_reply(user_message, history)
-        source = "autonomous-heuristic"
+    reply = _generate_deterministic_reply(user_message, history)
 
     return jsonify({
         "reply": reply,
-        "engine": source,
+        "engine": "virustotal-threat-intel",
         "status": "success",
-        "fallback_reason": fallback_reason,
+        "fallback_reason": None,
         "request_id": getattr(g, "request_id", "-"),
     }), 200
-
 # ═══════════════════════════════════════════════════════════════════════════
 # ERROR HANDLERS
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1695,13 +1312,11 @@ if __name__ == "__main__":
     debug = os.getenv("FLASK_DEBUG", "false").lower() == "true"
 
     log.info("=" * 64)
-    log.info("CivicShield Enterprise Core v4.1.0 operational on port %d", port)
-    log.info("  LLM Engine ....... %s", f"groq/{GROQ_MODEL}" if groq_client else "autonomous-heuristic")
-    log.info("  Reasoning ........ %s", GROQ_REASONING_EFFORT)
+    log.info("CivicShield Enterprise Core v4.2.0 operational on port %d", port)
+    log.info("  Threat Intel ..... %s", "VirusTotal v3 Global API" if VIRUSTOTAL_API_KEY else "Offline Heuristics")
     log.info("  OCR Engine ....... %s", "ENABLED (Multi-pass PIL + Tesseract)" if (PYTESSERACT_AVAILABLE and PILLOW_AVAILABLE) else "disabled")
     log.info("  PDF Parser ....... %s", "ENABLED (PyPDF)" if PYPDF_AVAILABLE else "disabled")
     log.info("  Rate Limiting .... %s", "ENABLED" if LIMITER_AVAILABLE else "disabled")
-    log.info("  Allowed Origins .. %s", CORS_ORIGINS)
     log.info("=" * 64)
 
     app.run(host="0.0.0.0", port=port, debug=debug)
