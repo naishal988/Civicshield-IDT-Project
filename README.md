@@ -432,36 +432,36 @@ docker run -d --name civicshield-app \
 
 ## 10. Project Leadership & Contribution Matrix
 
-> **Important Academic & Governance Notice:**
-> **CivicShield was conceptualized, architected, and fully implemented by Naishal Nadiya (Technical & Product Lead). The repository includes co-authors representing the academic IDT group members for coursework and viva evaluation.**
-
 This project was developed as an **Interdisciplinary Team (IDT)** academic capstone project combining Cybersecurity Forensics, Applied Artificial Intelligence, and Modern Full-Stack Software Engineering.
 
 ### Leadership & Role Distinction
 
-1. **Product Architect & Technical Lead: Naishal Nadiya**
-   - **Sole Creator & Lead Developer** of CivicShield.
+1. **Naishal Nadiya**
    - Designed and engineered the entire core architecture, Flask backend, heuristic forensic scoring engine, Groq LLM integration (`openai/gpt-oss-120b`), OCR/PDF parsing pipeline, and modern dark-mode frontend interface.
    - Conceptualized and calibrated the deterministic 1-to-10 risk calibration matrix and unified single-page architecture.
 
-2. **IDT Group Administrative Lead: Krishsinh Raj**
+2. **Krishsinh Raj**
    - Handled academic coordination, institutional compliance, faculty liaison, and coursework submissions.
 
-3. **Supporting Collaborators / Co-authors:**
-   - **Diya Patel**: Documentation support & test dataset aggregation.
-   - **Pranav** ([@cyber-pranav](https://github.com/cyber-pranav)): Edge-case testing & presentation assets.
-   - **Ansh Dohare** ([@urxansh](https://github.com/urxansh)): Survey feedback & user testing.
+3. **Diya Patel**
+   - Documentation support & test dataset aggregation.
+     
+4. **Pranav Pandya**
+   - Edge-case testing & presentation assets.
+     
+4. **Ansh Dohare**
+   - Survey feedback & user testing, AEIOU CANVAS creation.
 
 ---
 
 ### Contribution Weightage Matrix
 
-| Member | Core Contributions | 
-| :--- | :--- | :---: |
-| **Naishal Nadiya** | End-to-end full-stack development, 1-10 risk calibration engine, Groq AI pipeline, OCR/PDF parsing, security logic | 
-| **Krishsinh Raj** | Academic coordination, coursework deliverables, report compilation | 
+| Member | Core Contributions |
+| :--- | :--- |
+| **Naishal Nadiya** | End-to-end full-stack development, 1-10 risk calibration engine, Groq AI pipeline, OCR/PDF parsing, security logic |
+| **Krishsinh Raj** | Academic coordination, coursework deliverables, report compilation |
 | **Diya Patel** | Test dataset collection, sample scam text verification |
-| **Pranav** | Browser edge-case testing, feedback collation | 
+| **Pranav** | Browser edge-case testing, feedback collation |
 | **Ansh Dohare** | User testing, UI usability review |
 
 ---
