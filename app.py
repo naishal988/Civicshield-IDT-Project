@@ -201,7 +201,9 @@ def check_phishtank_url(url: str, timeout: float = 3.0) -> bool:
         if resp.status_code == 200:
             data = resp.json()
             if data and "results" in data:
-                return data["results"].get("in_database") is True
+                res = data["results"]
+                # THE FIX: Must confirm it is both in the database AND verified as a phishing threat
+                return res.get("in_database") is True and res.get("valid") is True
     except Exception: pass
     return False
 
