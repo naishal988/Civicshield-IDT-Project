@@ -545,10 +545,10 @@ This capstone project was conceived and engineered by an Interdisciplinary Team 
 | Team Member | Project Role & Core Responsibilities |
 | :--- | :--- |
 | **Krishsinh Raj** | **Team Leader & Cybersecurity Architect**<br>• Designed the heuristic threat taxonomy and Safe vs. Malicious classification logic.<br>• Engineered the typosquatting, government impersonation, and UPI extortion detection rules. |
-| **Pranav Pandya** | **Technical Lead & AI Integration**<br>• Implemented the Groq `gpt-oss-120b` LLM inference engine.<br>• Designed the multi-turn conversational memory and deterministic fallback system. |
+| **Naishal Nadiya** | **Technical Lead & AI Integration**<br>• Implemented the Groq `gpt-oss-120b` LLM inference engine.<br>• Designed the multi-turn conversational memory and deterministic fallback system. |
 | **Diya Patel** | **UI/UX Engineer & Frontend Development**<br>• Designed the responsive, dark-mode Single Page Application (SPA).<br>• Developed the animated risk status shield, glassmorphic UI, and interactive scan progression. |
 | **Ansh Dohare** | **Computer Vision & DevOps**<br>• Built the multi-pass Pillow image enhancement pipeline (grayscale, contrast, binarization).<br>• Integrated Tesseract OCR and managed Docker containerization strategies. |
-| **Naishal Nadiya** | **Backend API & Data Processing**<br>• Developed the enterprise Flask server and secure routing protocols.<br>• Handled payload sanitization, file-type verification, and VirusTotal/PhishTank API integrations. |
+| **Pranav Pandya** | **Backend API & Data Processing**<br>• Developed the enterprise Flask server and secure routing protocols.<br>• Handled payload sanitization, file-type verification, and VirusTotal/PhishTank API integrations. |
 
 </div>
 
