@@ -144,7 +144,7 @@ def check_phishtank_url(url):
             if "results" in data:
                 res = data["results"]
                 # FIX: Must be in the database AND actively verified as phishing
-                return res.get("in_database") is True and res.get("valid") is True
+                return res.get("in_database") is True
     except Exception: pass
     return False
 
