@@ -28,7 +28,7 @@
 8. [Docker & Container Deployment](#8-docker--container-deployment)
 9. [Cloud Deployment Guide (Render / Vercel / Railway)](#9-cloud-deployment-guide-render--vercel--railway)
 10. [Threat Classification & Demonstration Test Cases (Safe vs. Malicious)](#10-threat-classification--demonstration-test-cases-safe-vs-malicious)
-
+11. Academic IDT Team Contributions
 ---
 
 ## 1. Executive Summary & Problem Statement
@@ -537,6 +537,18 @@ Urgent KYC alert: install and download our banking update app.apk immediately to
 
 **CivicShield — Empowering Citizens with Autonomous Cybersecurity Intelligence.**  
 *National Cyber Crime Reporting Helpline: 1930 | Portal: cybercrime.gov.in*
+
+## 11. Academic IDT Team Contributions
+
+This capstone project was conceived and engineered by an Interdisciplinary Team (IDT), combining Cybersecurity Forensics, Applied Artificial Intelligence, and Modern Full-Stack Software Engineering.
+
+| Team Member | Project Role & Core Responsibilities |
+| :--- | :--- |
+| **Krishsinh Raj** | **Team Leader & Cybersecurity Architect**<br>• Designed the heuristic threat taxonomy and Safe vs. Malicious classification logic.<br>• Engineered the typosquatting, government impersonation, and UPI extortion detection rules. |
+| **Pranav Pandya** | **Technical Lead & AI Integration**<br>• Implemented the Groq `gpt-oss-120b` LLM inference engine.<br>• Designed the multi-turn conversational memory and deterministic fallback system. |
+| **Diya Patel** | **UI/UX Engineer & Frontend Development**<br>• Designed the responsive, dark-mode Single Page Application (SPA).<br>• Developed the animated risk status shield, glassmorphic UI, and interactive scan progression. |
+| **Ansh Dohare** | **Computer Vision & DevOps**<br>• Built the multi-pass Pillow image enhancement pipeline (grayscale, contrast, binarization).<br>• Integrated Tesseract OCR and managed Docker containerization strategies. |
+| **Naishal Nadiya** | **Backend API & Data Processing**<br>• Developed the enterprise Flask server and secure routing protocols.<br>• Handled payload sanitization, file-type verification, and VirusTotal/PhishTank API integrations. |
 
 </div>
 
