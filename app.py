@@ -354,7 +354,8 @@ TRUSTED_SUFFIXES = (
 GOV_BRAND_TOKENS = [
     "incometax", "parivahan", "echallan", "challan", "uidai", "aadhaar",
     "aadhar", "cybercrime", "passportindia", "epfindia", "epfo",
-    "sancharsaathi", "ceir", "digilocker", "delhipolice", "mumbaipolice"
+    "sancharsaathi", "ceir", "digilocker", "delhipolice", "mumbaipolice",
+    "-gov", "gov-", "govindia", "indiagov", "india-gov", "gov-india", "fake-gov"
 ]
 
 BANK_BRAND_TOKENS = [
@@ -394,21 +395,21 @@ THREAT_CATEGORIES = [
     (
         "fake_legal_coercion",
         "Coercive Legal Prosecution Threats",
-        r"\b(non[- ]bailable\s*warrant|nbw\s*(?:issued|against\s*you)|arrest\s*warrant\s*(?:issued)?|supreme\s*court\s*(?:arrest|contempt)\s*order|cbi\s*(?:raid|warrant|interrogation|cyber)|ed\s*(?:summon|raid|custody)|pmla\s*(?:case|investigation)|money\s*laundering\s*(?:case|investigation)\s*against\s*you|police\s*patrol\s*dispatched|local\s*police\s*(?:arriving|at\s*your\s*door))\b",
+        r"\b(non[- ]bailable\s*warrant|nbw\s*(?:issued|against\s*you)|arrest\s*warrant\s*(?:issued)?|supreme\s*court\s*(?:arrest|contempt)\s*order|cbi\s*(?:raid|warrant|interrogation|cyber)|ed\s*(?:summon|raid|custody)|pmla\s*(?:case|investigation)|money\s*laundering\s*(?:case|investigation)\s*against\s*you|police\s*patrol\s*dispatched|local\s*police\s*(?:arriving|at\s*your\s*door)|to\s*avoid\s*(?:immediate\s*)?arrest|face\s*(?:immediate\s*)?arrest|police\s*case\s*(?:registered|filed)|fir\s*(?:lodged|registered)\s*against\s*you)\b",
         3.5,
         "Arrest warrants and summons are never served over instant messaging apps or phone calls."
     ),
     (
         "urgent_financial_coercion",
         "Urgent Financial Extortion & Fake Bail/Fine",
-        r"\b(pay\s*(?:now\s*to\s*avoid\s*arrest|penalty(?:\s*now)?|fine\s*immediately|bail\s*deposit)|transfer\s+.*?\s+to\s+(?:rbi|safe|clearing|supervision|custody)\s*account|settle\s*(?:penalty|fine)\s*to\s*avoid\s*arrest|threat\s*to\s*freeze\s*all\s*(?:bank\s*)?accounts)\b",
+        r"\b(pay\s*(?:rs\.?\s*\d+|inr\s*\d+|\$\d+|\d+\s*rupees)?\s*(?:penalty|fine|bail|charges|fee|deposit|dues)|pay\s+.*?\s*to\s*avoid\s*(?:arrest|legal\s*action|police)|transfer\s+.*?\s+to\s+(?:rbi|safe|clearing|supervision|custody)\s*account|settle\s*(?:penalty|fine|dues)\s*to\s*avoid\s*arrest|threat\s*to\s*freeze\s*all\s*(?:bank\s*)?accounts|bank\s*accounts?\s*(?:will\s*be\s*)?frozen)\b",
         4.0,
         "Government authorities never request payments to 'safe custody' or 'RBI verification' accounts."
     ),
     (
         "coercive_deadline",
         "High-Pressure Coercive Panic Deadline",
-        r"\b(within\s*(?:15|30)\s*minutes|within\s*(?:1|2|3|24|48)\s*hours?|pay\s*immediately\s*to\s*avoid\s*arrest|immediate\s*(?:arrest|police\s*action|custody)\s*warrant|last\s*warning\s*before\s*(?:arrest|police|fir|warrant))\b",
+        r"\b((?:within|in)\s*(?:15|30|\d{1,2})\s*(?:minutes?|hours?|hrs?)|pay\s*immediately|immediately\s*to\s*avoid\s*arrest|last\s*(?:and\s*final\s*)?warning\s*before\s*(?:arrest|police|fir|warrant|action)|immediate\s*(?:arrest|police\s*action|custody|deactivation))\b",
         2.5,
         "High-pressure artificial deadlines linked to threats are designed to induce panic and prevent independent verification."
     ),
@@ -422,7 +423,7 @@ THREAT_CATEGORIES = [
     (
         "utility_kyc_bait",
         "Utility Cutoff or KYC Suspension Bait",
-        r"\b((?:electricity|power\s*supply)\s*(?:will\s*be\s*)?(?:disconnected|cut)\s*(?:tonight|within\s*\d+\s*hours?)|pan\s*(?:has\s*been\s*)?(?:inactive|blocked)\s*update\s*kyc|aadhaar\s*(?:suspended|deactivated)\s*update\s*immediately|update\s*your\s*kyc\s*(?:immediately\s*or|to\s*avoid\s*account\s*block))\b",
+        r"\b((?:electricity|power\s*supply)\s*(?:will\s*be\s*)?(?:disconnected|cut|suspended)\s*(?:tonight|(?:within|in)\s*\d+\s*hours?)?|(?:pan|aadhaar|aadhar|bank\s*account|sim\s*card)\s*(?:will\s*be\s*|has\s*been\s*|is\s*)?(?:blocked|suspended|deactivated|cancelled|inactive)(?:\s*(?:in|within)\s*\d+\s*hours?)?|update\s*(?:your\s*)?(?:kyc|pan|aadhaar)\s*(?:immediately|to\s*avoid))\b",
         3.0,
         "Discoms and UIDAI do not send evening SMS threats requesting immediate third-party app installations."
     ),
@@ -437,7 +438,7 @@ THREAT_CATEGORIES = [
         "malware_apk_payload",
         "Malicious APK Application or Remote Access Tool",
         r"\b([a-zA-Z0-9_\-]+\.apk\b|(?:download|install)\s+(?:the\s+)?(?:[a-zA-Z0-9_\-]+\s+)?apk\b|install\s*(?:anydesk|teamviewer|rustdesk|quicksupport)|connect\s*via\s*(?:anydesk|teamviewer|rustdesk))\b",
-        3.5,
+        6.5,
         "Do not download .apk files directly or install remote-access tools; they allow attackers to steal OTPs and financial data."
     )
 ]
@@ -850,6 +851,11 @@ def classify_urls(text: str) -> dict:
 
         if not host or host in checked_hosts:
             continue
+
+        # Ignore local file extensions that are not valid web domains
+        if any(host.endswith(ext) for ext in [".apk", ".pdf", ".png", ".jpg", ".jpeg", ".webp", ".exe", ".zip", ".tar", ".gz", ".docx", ".xlsx", ".txt"]):
+            continue
+
         checked_hosts.add(host)
 
         # 1. Authoritative Government & Public Institutions
@@ -865,38 +871,42 @@ def classify_urls(text: str) -> dict:
 
         # 3. VirusTotal Multi-Vendor Global Antivirus Engine (SECONDARY — only if not in PhishTank)
         vt_hit = check_virustotal_url(url)
-        if vt_hit:
-            if vt_hit.get("is_threat"):
-                results["virustotal_threat"].append((url, host, vt_hit))
-                continue
-            else:
-                results["virustotal_clean"].append((url, host, vt_hit))
-
-        # 4. Trusted Platforms & Developer Clouds (Cloudflare Workers, GitHub Pages, Internshala, etc.)
-        if host in TRUSTED_PLATFORMS or any(host.endswith(sfx) for sfx in TRUSTED_SUFFIXES):
-            results["trusted"].append((url, host))
+        if vt_hit and vt_hit.get("is_threat"):
+            results["virustotal_threat"].append((url, host, vt_hit))
             continue
 
-        # 4. URL Shorteners
-        if host in URL_SHORTENERS:
-            results["shortener"].append((url, host))
-            continue
-
-        # 5. Spoofed Government or Banking Brands (Typosquatting)
-        is_spoofed_gov = any(token in host for token in GOV_BRAND_TOKENS)
+        # 4. Spoofed Government or Banking Brands (Typosquatting)
+        is_spoofed_gov = any(token in host for token in GOV_BRAND_TOKENS) or bool(
+            re.search(r"(?:^|[-.])(?:gov|nic|police|court|challan|rbi|cbi|uidai|aadhaar|parivahan)(?:[-.]|$)", host)
+        )
         is_spoofed_bank = bool(re.search(r"(?:sbi|hdfc|icici|pnb|axisbank|kotak|bob).*(?:kyc|pan|aadhaar|update|verify|reward|refund|login|netbanking)", host))
         if is_spoofed_gov or is_spoofed_bank:
             results["spoofed"].append((url, host))
             continue
 
-        # 6. Raw IP Address or Suspicious Disposable TLDs
+        # 5. Raw IP Address or Suspicious Disposable TLDs
         is_ip = bool(re.match(r"^\d{1,3}(\.\d{1,3}){3}$", host))
         is_bad_tld = any(host.endswith(tld) for tld in SUSPICIOUS_TLDS)
         if is_ip or is_bad_tld:
             results["suspicious_infra"].append((url, host))
             continue
+    
 
-        # 7. Standard Neutral Web Domain
+        # 6. URL Shorteners
+        if host in URL_SHORTENERS:
+            results["shortener"].append((url, host))
+            continue
+
+        # 7. Trusted Platforms & Developer Clouds (Cloudflare Workers, GitHub Pages, Internshala, etc.)
+        if host in TRUSTED_PLATFORMS or any(host.endswith(sfx) for sfx in TRUSTED_SUFFIXES):
+            results["trusted"].append((url, host))
+            continue
+
+        # 8. Clean VirusTotal status for non-spoofed standard domains
+        if vt_hit and not vt_hit.get("is_threat"):
+            results["virustotal_clean"].append((url, host, vt_hit))
+
+        # 9. Standard Neutral Web Domain
         results["neutral"].append((url, host))
 
     return results
@@ -929,7 +939,7 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
 
     # Check if text claims to be official government or judicial authority
     has_gov_claims = bool(re.search(
-        r"\b(police|cbi|ncb|customs|enforcement\s*directorate|high\s*court|supreme\s*court|traffic\s*challan|parivahan|incometax|uidai|aadhaar|ministry\s*of)\b",
+        r"\b(police|cbi|ncb|customs|ed|enforcement\s*directorate|high\s*court|supreme\s*court|court|traffic\s*challan|parivahan|incometax|income\s*tax|uidai|aadhaar|aadhar|ministry\s*of|rbi|trai|telecom\s*regulatory|govt|government)\b",
         text_lower
     ))
 
@@ -994,12 +1004,19 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
 
     for url, host, vt_info in url_classes.get("virustotal_clean", []):
         total_eng = vt_info.get("total_engines", 90)
-        trust_points += 2.0
-        findings.append({
-            "type": "good",
-            "severity": "positive",
-            "text": f"VirusTotal Threat Intelligence: '{host}' verified safe across {total_eng} global security engines (0 malicious detections)."
-        })
+        if not detected_tags and not has_gov_claims:
+            trust_points += 2.0
+            findings.append({
+                "type": "good",
+                "severity": "positive",
+                "text": f"VirusTotal Threat Intelligence: '{host}' verified safe across {total_eng} global security engines (0 malicious detections)."
+            })
+        else:
+            findings.append({
+                "type": "warn",
+                "severity": "low",
+                "text": f"VirusTotal Threat Intelligence: No prior reports on '{host}' across {total_eng} engines, but domain is unverified."
+            })
 
     for url, host in url_classes["official"]:
         trust_points += 5.0
@@ -1107,14 +1124,20 @@ def _run_heuristic_scan(text_clean: str, filename: str | None) -> dict:
 
     # ── DYNAMIC RISK SCORE CALCULATION ──
     # This restores the true 1 to 10 sliding scale using mathematical accumulation
-    raw_score = 1.0 + risk_points - (trust_points * 0.4)
+    if detected_tags or risk_points >= 3.0:
+        # Do not allow benign signals or neutral domains to dilute detected extortion/fraud indicators
+        effective_trust = 0.0
+    else:
+        effective_trust = trust_points
+
+    raw_score = 1.0 + risk_points - (effective_trust * 0.4)
     risk = max(1.0, min(10.0, raw_score))
 
     # Absolute safety floors so severe infrastructure threats cannot be diluted below a warning
     if "virustotal_confirmed_threat" in detected_tags or "phishtank_confirmed_phishing" in detected_tags:
         risk = max(9.8, risk)
-    elif bool(url_classes["spoofed"] or url_classes["suspicious_infra"]):
-        risk = max(7.5, risk)
+    elif bool(url_classes["spoofed"] or url_classes["suspicious_infra"]) or "malware_apk_payload" in detected_tags:
+        risk = max(8.5, risk)
 
     if "phishtank_confirmed_phishing" in detected_tags:
         verdict = "CRITICAL THREAT — PHISHTANK CONFIRMED PHISHING"

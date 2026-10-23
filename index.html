@@ -2971,12 +2971,19 @@
         const status = (data?.verdict_code && ["danger", "warning", "safe"].includes(data.verdict_code))
           ? data.verdict_code
           : (data?.threat_level === "CRITICAL" ? "danger" : data?.threat_level === "SUSPICIOUS" ? "warning" : "safe");
+        let score = data?.score;
+        if (typeof score !== "number") score = parseFloat(score);
+        if (isNaN(score) || score === null || score === undefined) {
+          score = status === "danger" ? 9.8 : (status === "warning" ? 5.5 : 1.0);
+        }
         return {
           threat_level: data?.threat_level || (status === "danger" ? "CRITICAL" : status === "warning" ? "SUSPICIOUS" : "SAFE"),
           verdict_code: status,
           verdict: data?.verdict || (status === "danger" ? "Critical threat detected" : status === "warning" ? "Suspicious content" : "Verified legitimate"),
           summary: data?.summary || "The analysis completed, but no additional summary was returned.",
           findings: Array.isArray(data?.findings) ? data.findings : [],
+          score: score,
+          trust_score: data?.trust_score ?? 0,
           extracted_text: data?.extracted_text || this.lastInput || ""
         };
       },
@@ -2990,11 +2997,11 @@
         
         // Critical fraud patterns
         const hasDigitalArrest = /digital\s*arrest|virtual\s*arrest|skype.*(?:call|video|interrogation)|stay\s*on\s*(?:video|camera)/.test(lower);
-        const hasFakeLegal = /non[- ]bailable\s*warrant|arrest\s*warrant\s*issued|cbi\s*(?:raid|warrant|interrogation)|pmla\s*case|money\s*laundering/.test(lower);
+        const hasFakeLegal = /non[- ]bailable\s*warrant|arrest\s*warrant\s*issued|cbi\s*(?:raid|warrant|interrogation)|pmla\s*case|money\s*laundering|to\s*avoid\s*(?:immediate\s*)?arrest|face\s*(?:immediate\s*)?arrest/.test(lower);
         const hasCourierScam = /(?:fedex|dhl|customs|courier|parcel).*(?:narcotics|drugs|contraband|mdma|seized|confiscated)/.test(lower);
-        const hasExtortion = /(?:transfer|pay).*to.*(?:rbi|safe|clearing|custody)|bail\s*deposit|pay.*to\s*avoid\s*arrest/.test(lower);
-        const hasSpoofedGovDomain = /(?:echallan|parivahan|incometax|uidai|aadhaar).*(?:\.vip|\.xyz|\.top|\.online|\.buzz|\.icu)/.test(lower);
-        const hasUrgentThreat = /(?:within\s*\d+\s*(?:hour|minute|hours)|immediately).*to\s*avoid\s*(?:arrest|deactivation|penalty)/.test(lower);
+        const hasExtortion = /(?:transfer|pay).*to.*(?:rbi|safe|clearing|custody)|bail\s*deposit|pay\s*(?:rs\.?\s*\d+)?\s*(?:penalty|fine)|pay.*to\s*avoid\s*arrest/.test(lower);
+        const hasSpoofedGovDomain = /(?:echallan|parivahan|incometax|uidai|aadhaar|gov|nic).*(?:\.vip|\.xyz|\.top|\.online|\.buzz|\.icu|fake-|-gov|gov-)/.test(lower);
+        const hasUrgentThreat = /(?:within|in)\s*\d+\s*(?:hour|minute|hours)|immediately.*to\s*avoid\s*(?:arrest|deactivation|penalty)|aadhaar.*(?:blocked|suspended)/.test(lower);
         const hasApkThreat = /\b[a-zA-Z0-9_\-]+\.apk\b|install\s*(?:anydesk|teamviewer|rustdesk|quicksupport)/.test(lower);
 
         // 1. PhishTank Cybersecurity Database verified threat patterns (Priority 1)
