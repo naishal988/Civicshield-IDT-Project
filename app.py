@@ -115,7 +115,7 @@ else:
 
 VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama3-70b-8192") # Enterprise AI Model
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b") # Enterprise AI Model
 
 if VIRUSTOTAL_API_KEY:
     log.info("VirusTotal Threat Intelligence API configured and active.")
