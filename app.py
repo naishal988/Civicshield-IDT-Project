@@ -110,10 +110,13 @@ else:
     log.warning("Flask-Limiter not installed — running without rate limits.")
 
 # ═══════════════════════════════════════════════════════════════════════════
-# VIRUSTOTAL THREAT INTELLIGENCE CONFIGURATION
+# VIRUSTOTAL & GROQ AI CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════
 
 VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama3-70b-8192") # Enterprise AI Model
+
 if VIRUSTOTAL_API_KEY:
     log.info("VirusTotal Threat Intelligence API configured and active.")
 else:
@@ -1254,6 +1257,53 @@ def scan():
 
     return jsonify(result), 200
 
+def _generate_ai_reply(query: str, history: list[dict] | None = None) -> str:
+    """Enterprise LLM Integration with Deterministic Fallback"""
+    if not GROQ_API_KEY:
+        log.warning("No Groq API Key found. Falling back to offline deterministic rules.")
+        return _generate_deterministic_reply(query, history)
+
+    try:
+        system_prompt = {
+            "role": "system",
+            "content": (
+                "You are CivicShield AI, an elite, world-class cybersecurity forensic investigator and legal advisor. "
+                "You specialize in Indian cyber law, stopping 'Digital Arrests', and exposing government impersonation scams. "
+                "Provide highly empathetic, deeply analytical, and professional advice. "
+                "Format your responses cleanly using Markdown, bullet points, and bold text for emphasis. "
+                "If a user is actively losing money, urgently direct them to dial 1930 and visit cybercrime.gov.in. "
+                "Never break character. You are a $10,000 enterprise-grade security platform."
+            )
+        }
+
+        messages = [system_prompt]
+        if history:
+            for msg in history[-4:]:
+                messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
+        messages.append({"role": "user", "content": query})
+
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": GROQ_MODEL,
+            "messages": messages,
+            "temperature": 0.3,
+            "max_tokens": 1024
+        }
+
+        resp = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=8)
+        if resp.status_code == 200:
+            return resp.json()["choices"][0]["message"]["content"]
+        else:
+            log.error(f"Groq API Error: {resp.text}")
+            return _generate_deterministic_reply(query, history)
+            
+    except Exception as e:
+        log.error(f"LLM Chat Error: {e}")
+        return _generate_deterministic_reply(query, history)
+
 @app.route("/api/chat", methods=["POST", "OPTIONS"])
 @limiter.limit("120 per hour")
 def chat():
@@ -1266,11 +1316,11 @@ def chat():
         return jsonify({"error": "Message body cannot be empty."}), 400
 
     history = body.get("history") or []
-    reply = _generate_deterministic_reply(user_message, history)
+    reply = _generate_ai_reply(user_message, history)
 
     return jsonify({
         "reply": reply,
-        "engine": "virustotal-threat-intel",
+        "engine": "groq-llm-engine" if GROQ_API_KEY else "offline-heuristics",
         "status": "success",
         "fallback_reason": None,
         "request_id": getattr(g, "request_id", "-"),
