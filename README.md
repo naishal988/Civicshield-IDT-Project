@@ -27,7 +27,7 @@
 7. [Installation & Local Setup](#7-installation--local-setup)
 8. [Docker & Container Deployment](#8-docker--container-deployment)
 9. [Cloud Deployment Guide (Render / Vercel / Railway)](#9-cloud-deployment-guide-render--vercel--railway)
-10. [Risk Score Benchmark & Demo Test Cases (1 to 10 Calibration)](#risk-score-benchmark--demo-test-cases-1-to-10-calibration)
+10. [Dynamic Risk Score Benchmark & Demo Test Cases (1 to 10 Scale)](#10-dynamic-risk-score-benchmark--demo-test-cases-1-to-10-scale)
 
 ---
 
@@ -59,7 +59,9 @@ According to the **Indian Cyber Crime Coordination Centre (I4C)** under the Mini
 | **Multi-Pass OCR Pipeline** | Grayscale auto-contrast, adaptive thresholding, resolution upscaling via Pillow & Tesseract | Captures high-clarity text from blurry, low-resolution WhatsApp screenshots and noisy photographs. |
 | **Typosquatting Engine** | Substring brand-token analysis, TLD whitelisting, punycode resolution, URL shortener detection | Prevents victims from navigating to clone portals mimicking Parivahan, UIDAI, Income Tax, or Delhi Police. |
 | **VPA / UPI Mismatch Filter** | Regular expression parser identifying personal banking VPAs (`@okhdfcbank`, `@paytm`, `@ybl`) | Unmasks fraudulent extortion: official government bodies never collect fines via personal UPI IDs. |
-| **Digital Arrest Classifier** | Weighted semantic keyword heuristic matching coercive legal language, section numbers, and urgency cues | Provides an instant 0–10 calibrated risk score and transparent evidence breakdown. |
+| **PhishTank Threat Database** | Priority-1 local/cached community threat feed & PhishTank API verification | Intercepts verified phishing URLs instantly *before* consuming secondary API quotas. |
+| **VirusTotal API Integration** | Priority-2 reputation intelligence invoked only if clean in PhishTank | Scans external domain and file hashes against 70+ security vendors. |
+| **Dynamic Risk Engine (1–10)** | True mathematical accumulation formula: `1.0 + Risk - (Trust * 0.4)` with absolute safety floors | Replaces binary switch-like hardcoding with an authentic 1 to 10 sliding risk meter. |
 | **Multi-Turn Conversational AI** | Groq OpenAI-compatible Chat Completions with 131K context window & sliding memory | Empathetic, authoritative cybersecurity advisory guiding victims through Golden Hour escalation (1930 / cybercrime.gov.in). |
 | **Autonomous Heuristic Fallback** | Instantaneous offline rule engine activated during API rate limits or latency spikes | Guarantees 100% platform availability even during upstream cloud outages. |
 
@@ -87,13 +89,13 @@ According to the **Indian Cyber Crime Coordination Centre (I4C)** under the Mini
 │  - Rate Limiting Middleware (Flask-Limiter / Memory / Redis)           │
 └───────┬───────────────────────────┬────────────────────────────┬───────┘
         │                           │                            │
-        ▼ (File Ingestion)          ▼ (Text / Chat)              ▼ (Heuristics)
+        ▼ (File Ingestion)          ▼ (Text / Chat)              ▼ (Heuristics & Threat DB)
 ┌───────────────────────┐   ┌───────────────────────┐   ┌───────────────────────┐
-│ MULTI-PASS OCR PIPELINE│   │  GROQ LLM INFERENCE   │   │ FORENSIC RULE ENGINE  │
+│ MULTI-PASS OCR PIPELINE│   │  GROQ LLM INFERENCE   │   │ FORENSIC THREAT ENGINE│
 │ - Magic byte sniffing │   │ - openai/gpt-oss-120b │   │ - Digital arrest cues │
-│ - EXIF orientation fix│   │ - 131K context window │   │ - Typosquatting checks│
-│ - Grayscale & Contrast│   │ - Sliding turn window │   │ - Personal UPI hunter │
-│ - Adaptive binarize   │   │ - Latency resilience  │   │ - Risk score (0 - 10) │
+│ - EXIF orientation fix│   │ - 131K context window │   │ - PhishTank DB (1st)  │
+│ - Grayscale & Contrast│   │ - Sliding turn window │   │ - VirusTotal API (2nd)│
+│ - Adaptive binarize   │   │ - Latency resilience  │   │ - Threat Level Verdict│
 │ - Tesseract OCR (Eng) │   │ - Autonomous fallback │   │ - Evidence signals    │
 └───────────────────────┘   └───────────────────────┘   └───────────────────────┘
 ```
@@ -107,7 +109,7 @@ sequenceDiagram
     participant Frontend as CivicShield SPA (index.html)
     participant Flask as Flask Core (app.py)
     participant OCR as Pillow + Tesseract Pipeline
-    participant Heuristic as Forensic Heuristic Engine
+    participant Heuristic as Forensic Threat Engine
     participant Groq as Groq LLM (gpt-oss-120b)
 
     Citizen->>Frontend: Uploads suspicious summons (PDF/Image) or pastes SMS
@@ -122,12 +124,14 @@ sequenceDiagram
 
     Flask->>Heuristic: Evaluates text against forensic threat taxonomy
     Heuristic->>Heuristic: Inspects domains (e.g., .gov.in vs typosquats)
+    Heuristic->>Heuristic: Checks PhishTank database FIRST (immediate threat intercept)
+    Heuristic->>Heuristic: Checks VirusTotal API SECOND (only if clean in PhishTank)
     Heuristic->>Heuristic: Detects unauthorized UPI handles (@okhdfcbank, @paytm)
     Heuristic->>Heuristic: Flags digital arrest coercive phrases & artificial deadlines
-    Heuristic-->>Flask: Returns risk score (0-10), verdict, and findings array
+    Heuristic-->>Flask: Returns threat level (CRITICAL/SUSPICIOUS/SAFE), verdict, and findings array
 
-    Flask-->>Frontend: HTTP 200 JSON Response (verdict, score, evidence, text)
-    Frontend->>Citizen: Renders animated circular risk meter, evidence cards, and advice
+    Flask-->>Frontend: HTTP 200 JSON Response (threat_level, verdict, verdict_code, evidence, text)
+    Frontend->>Citizen: Renders illuminated threat status shield, evidence cards, and advice
 
     opt Citizen Opens Assistant
         Citizen->>Frontend: "They said Mumbai Police will arrest me in 1 hour on Skype. What should I do?"
@@ -167,21 +171,41 @@ sequenceDiagram
 
 ## 5. Heuristic Forensics & Threat Taxonomy
 
-CivicShield's heuristic engine classifies indicators across weighted threat categories:
+CivicShield operates an intelligence-driven, two-tier threat detection pipeline backed by a **dynamic 1-to-10 mathematical risk accumulation engine**.
 
+### Two-Tier Threat Intelligence Pipeline
+
+1. **Priority 1 — PhishTank Database Check (First)**:
+   - Every external URL or domain extracted from text/OCR is checked **first** against the local PhishTank intelligence feed and verification API.
+   - If verified as a phishing entry, the threat is flagged as **`CRITICAL`** immediately (score floor: `9.8`) and the scan pipeline proceeds without consuming secondary API quotas.
+2. **Priority 2 — VirusTotal Reputation Scan (Second)**:
+   - URLs that pass the PhishTank check cleanly are then passed to the VirusTotal API to cross-reference multi-vendor malware and malicious URL registries.
+3. **Forensic Semantic Heuristics & UPI Interception**:
+   - Evaluates high-pressure psychological manipulation cues: Digital Arrest non-bailable warrants, simulated CBI/ED/NCB interrogations, and personal UPI virtual payment addresses (`@okhdfcbank`, `@paytm`, `@ybl`).
+
+### Dynamic Mathematical Score Accumulation
+
+Instead of binary hardcoded thresholds, the engine computes risk dynamically through additive threat signals and trust mitigations:
+
+```python
+# Raw score computed from cumulative threat weights and verified trust mitigations
+raw_score = 1.0 + risk_points - (trust_points * 0.4)
+risk = max(1.0, min(10.0, raw_score))
+
+# Absolute safety floors prevent severe threats from being diluted below warning levels
+if "virustotal_confirmed_threat" in detected_tags or "phishtank_confirmed_phishing" in detected_tags:
+    risk = max(9.8, risk)
+elif bool(url_classes["spoofed"] or url_classes["suspicious_infra"]):
+    risk = max(7.5, risk)
 ```
-Threat Points (T) = ∑ CategoryWeights + URLRisk + UPIRisk
-Trust Points (P)  = ∑ VerifiedGovDomains + OfficialRefSyntax + NationalHelplineCues
-Calibrated Risk   = MAX(0.0, MIN(10.0, T - (P * 0.4)))
-```
 
-### Risk Calibration Table
+### Risk Calibration Matrix
 
-| Risk Score | Verdict Category | Badge Style | System Action & Guidance |
-| :---: | :---: | :---: | :--- |
-| **7.0 – 10.0** | `HIGH RISK — LIKELY SCAM` | `Danger (Red)` | Critical social engineering detected. Immediate escalation instructions for National Helpline 1930 and cybercrime.gov.in. |
-| **3.0 – 6.9** | `SUSPICIOUS — USE CAUTION` | `Warning (Amber)` | Anomalous patterns detected (non-official domain or urgent phrasing). Advise independent verification via official portals. |
-| **0.0 – 2.9** | `LIKELY LEGITIMATE` | `Safe (Green)` | No coercive threat markers found. Valid `.gov.in` domain or formal procedural reference verified. |
+| Risk Score | Threat Level | Verdict Category | Badge Style | Trigger Criteria & System Action |
+| :---: | :---: | :---: | :---: | :--- |
+| **7.0 – 10.0** | **CRITICAL** | `HIGH RISK — LIKELY SCAM` | `Danger (Red)` | Confirmed PhishTank phishing link, VirusTotal malicious detection, fake digital arrest warrant, or personal UPI extortion. Immediate escalation to 1930 & cybercrime.gov.in. |
+| **4.0 – 6.9** | **SUSPICIOUS** | `SUSPICIOUS — USE CAUTION` | `Warning (Amber)` | Non-government generic domains with coercive urgency cues, unverified third-party APK/links, or atypical departmental notifications. Advise independent official verification. |
+| **1.0 – 3.9** | **SAFE** | `LIKELY LEGITIMATE` | `Safe (Green)` | Verified official `.gov.in` / `.nic.in` domains, legitimate administrative reference numbers, or benign day-to-day communications without threat markers. |
 
 ---
 
@@ -235,19 +259,20 @@ file: [binary attachment: .pdf, .png, .jpg, .jpeg, .webp, .txt]
 {
   "verdict": "HIGH RISK — LIKELY SCAM",
   "verdict_code": "danger",
+  "threat_level": "CRITICAL",
   "score": 10.0,
   "trust_score": 0.0,
   "summary": "CRITICAL THREAT SIGNALS DETECTED. This communication exhibits high-confidence indicators of government impersonation, digital arrest extortion, or lookalike phishing.",
   "findings": [
     {
       "type": "issue",
-      "severity": "high",
-      "text": "Digital Arrest & Virtual Extortion: Law enforcement in India NEVER conducts 'Digital Arrests' or video-call interrogations."
+      "severity": "critical",
+      "text": "PhishTank Threat Database: URL identified as active phishing infrastructure."
     },
     {
       "type": "issue",
       "severity": "high",
-      "text": "Coercive Legal Prosecution Threats: Arrest warrants and summons are never served over instant messaging apps or phone calls."
+      "text": "Digital Arrest & Virtual Extortion: Law enforcement in India NEVER conducts 'Digital Arrests' or video-call interrogations."
     },
     {
       "type": "issue",
@@ -256,6 +281,7 @@ file: [binary attachment: .pdf, .png, .jpg, .jpeg, .webp, .txt]
     }
   ],
   "threat_tags": [
+    "phishtank_phish",
     "digital_arrest",
     "fake_legal_coercion",
     "urgent_financial_coercion",
@@ -429,89 +455,90 @@ docker run -d --name civicshield-app \
 
 ---
 
-## 10. Risk Score Benchmark & Demo Test Cases (1 to 10 Calibration)
+## 10. Dynamic Risk Score Benchmark & Demo Test Cases (1 to 10 Scale)
 
-For academic viva demonstrations, defense juries, and faculty evaluations, CivicShield features a **deterministic 1-to-10 Risk Calibration Matrix**. The forensic engine computes transparent, reproducible threat scores by correlating domain registries, TLD abuse metrics, behavioral urgency patterns, and financial extortion markers.
+For academic viva demonstrations, defense juries, and faculty evaluations, CivicShield features a **calibrated 1-to-10 Risk Benchmark Matrix**. By combining PhishTank (Priority 1) and VirusTotal (Priority 2) with mathematical point accumulation, the engine provides reproducible threat scores with transparent evidence.
 
-### Viva Demonstration Matrix (1/10 to 10/10)
+### Viva Demonstration Matrix (1.0 to 10.0 Scale)
 
-| Score | Category | Verdict Badge | Example Demonstration Input | Forensic Signals & Underlying Rationale |
-| :---: | :--- | :--- | :--- | :--- |
-| **1.0** | Authoritative Filing | `Safe` (Green) | `https://incometax.gov.in Reference No: IT/2026/8941` | Valid `.gov.in` domain + formal administrative reference number syntax. Maximum trust points awarded, 0 threat signals. |
-| **2.0** | Verified Official Portal | `Safe` (Green) | `https://parivahan.gov.in` | Verified legitimate Indian government portal (`.gov.in` / `.nic.in`) without formal case filing syntax. |
-| **3.0** | Benign Communication | `Safe` (Green) | `Meeting scheduled with municipal road repair team next Monday at city center.` | Non-official general text without any urgency, coercion, threat keywords, or external links. Clean baseline score. |
-| **4.5** | Generic Third-Party Domain | `Suspicious` (Amber) | `https://news-bulletin.org/daily-update` | Generic non-government domain (`.org`, `.com`, `.net`). Unverified source without explicit scam triggers. |
-| **5.5** | Unverified Domain + Urgency | `Suspicious` (Amber) | `https://portal-services.com/check KYC update pending immediately` | Generic domain (`4.5`) combined with soft coercive urgency cue (`immediately`, `pending KYC update`). |
-| **7.0** | Urgent Coercion + Fake Fine | `High Risk` (Red) | `Electricity power supply disconnected tonight pay penalty within 2 hours at https://bill-pay-online.net` | Non-gov link + utility disconnection threat (`utility_kyc_bait`) + fake penalty demand + 2-hour deadline pressure. |
-| **8.0** | Phishing Infrastructure | `High Risk` (Red) | `https://phishtank.icu/login` or `http://192.168.1.1/verify` | Disposable high-risk TLD (`.icu`, `.top`, `.xyz`) or raw numeric IPv4 hostname. Immediate minimum 8.0 score trigger. |
-| **9.0** | Phishing + Arrest Threat | `High Risk` (Red) | `CBI arrest warrant issued against your Aadhaar. Connect immediately on video call: https://cbi-investigation.top/case` | Malicious TLD (`.top`) combined with simulated CBI arrest warrant, Aadhaar misuse threat, and video call confinement. |
-| **10.0** | Phishing + Arrest + Extortion | `High Risk` (Red) | `Digital arrest order: CBI NBW issued. Transfer Rs 98,000 bail deposit to rbi-clearing@okhdfcbank or https://court-bail.icu/pay now` | Maximum severity composite: Malicious TLD (`.icu`) + Digital Arrest non-bailable warrant + personal UPI VPA extortion (`@okhdfcbank`). |
+| Score | Threat Level | Verdict Badge | Primary Engine | Example Demonstration Input | Forensic Signals & Underlying Rationale |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| **1.0** | **SAFE** | `Safe` (Green) | Whitelist Registry | `https://incometax.gov.in Reference No: IT/2026/8941` | Valid `.gov.in` domain (+5.0 trust) + administrative filing syntax (+2.5 trust). Raw score clamps to 1.0 minimum. |
+| **2.0** | **SAFE** | `Safe` (Green) | Whitelist Registry | `https://parivahan.gov.in` | Verified legitimate Indian government portal (`.gov.in` / `.nic.in`) whitelisted directly. |
+| **3.0** | **SAFE** | `Safe` (Green) | Baseline Heuristics | `Meeting scheduled with municipal road repair team next Monday at city center.` | Everyday benign text without urgency, coercion, threat keywords, or external links. |
+| **4.5** | **SUSPICIOUS** | `Suspicious` (Amber) | Heuristic Reputation | `https://news-bulletin.org/daily-update` | Generic non-government domain (`.org`, `.com`). Clean in threat feeds, but unverified origin. |
+| **5.5** | **SUSPICIOUS** | `Suspicious` (Amber) | Heuristic Reputation | `https://portal-services.com/check KYC update pending immediately` | Generic domain (+3.5 risk) combined with coercive urgency cue (+2.0 risk). |
+| **7.0** | **CRITICAL** | `High Risk` (Red) | Semantic Heuristics | `Electricity power supply disconnected tonight pay penalty within 2 hours at https://bill-pay-online.net` | Utility disconnection threat (`utility_kyc_bait`) + fake penalty demand + 2-hour deadline pressure. |
+| **9.8** | **CRITICAL** | `High Risk` (Red) | **PhishTank Database (Priority 1)** | `https://phishtank.icu/login` | Intercepted directly by PhishTank database threat intelligence *before* VirusTotal API invocation. Safety floor: 9.8. |
+| **8.0** | **CRITICAL** | `High Risk` (Red) | Network Heuristics | `http://192.168.1.1/verify` | Direct numeric IPv4 hostname bypassing standard DNS reputation mechanisms. Safety floor: 7.5+. |
+| **9.0** | **CRITICAL** | `High Risk` (Red) | Semantic Heuristics | `CBI arrest warrant issued against your Aadhaar. Connect immediately on video call: https://cbi-investigation.top/case` | Coercive legal threat: simulated CBI warrant, Aadhaar misuse, video call confinement, and malicious `.top` TLD. |
+| **10.0** | **CRITICAL** | `High Risk` (Red) | Multi-Vector Composite | `Digital arrest order: CBI NBW issued. Transfer Rs 98,000 bail deposit to rbi-clearing@okhdfcbank or https://court-bail.icu/pay now` | Maximum severity composite: Digital Arrest NBW + personal UPI VPA extortion (`@okhdfcbank`) + disposable `.icu` link. |
 
 ---
 
 ### Quick Copy-Paste Test Inputs for Faculty Review
 
-Use the following snippets during live project evaluation to demonstrate the full dynamic range of the risk meter:
+Use the following test snippets during live project evaluation to demonstrate the dynamic 1 to 10 risk meter:
 
-#### Test 1: Verified Safe Notice (Score: 1.0 / 10)
+#### Test 1: Verified Safe Notice (Score: 1.0 / 10 | SAFE)
 ```text
 https://incometax.gov.in Reference No: IT/2026/8941
 ```
-*Expected Result:* Score **1.0**, Badge **Verified low risk** (Green ring), Findings report official government domain verification and formal filing syntax.
+*Expected Result:* Score **1.0**, Threat Level **SAFE**, Badge **Verified low risk** (Green meter), Findings report official government domain verification and formal filing syntax.
 
-#### Test 2: Standard Official Portal (Score: 2.0 / 10)
+#### Test 2: Standard Official Portal (Score: 2.0 / 10 | SAFE)
 ```text
 https://parivahan.gov.in
 ```
-*Expected Result:* Score **2.0**, Badge **Verified low risk** (Green ring), Confirms official `.gov.in` whitelist status.
+*Expected Result:* Score **2.0**, Threat Level **SAFE**, Badge **Verified low risk** (Green meter), Confirms official `.gov.in` whitelist status.
 
-#### Test 3: Clean Benign Message (Score: 3.0 / 10)
+#### Test 3: Clean Benign Message (Score: 1.0 / 10 | SAFE)
 ```text
 Meeting scheduled with municipal road repair team next Monday at city center.
 ```
-*Expected Result:* Score **3.0**, Badge **Verified low risk** (Green ring), Zero threat tags detected.
+*Expected Result:* Score **1.0**, Threat Level **SAFE**, Badge **Verified low risk** (Green meter), Zero threat tags detected.
 
-#### Test 4: Generic Unverified Link (Score: 4.5 / 10)
+#### Test 4: Generic Unverified Link (Score: 4.5 / 10 | SUSPICIOUS)
 ```text
 https://news-bulletin.org/daily-update
 ```
-*Expected Result:* Score **4.5**, Badge **Suspicious** (Amber ring), Signals non-government third-party domain.
+*Expected Result:* Score **4.5**, Threat Level **SUSPICIOUS**, Badge **Suspicious** (Amber meter), Signals non-government third-party domain.
 
-#### Test 5: Unverified Domain with Urgency Marker (Score: 5.5 / 10)
+#### Test 5: Unverified Domain with Urgency Marker (Score: 5.5 / 10 | SUSPICIOUS)
 ```text
 https://portal-services.com/check KYC update pending immediately
 ```
-*Expected Result:* Score **5.5**, Badge **Suspicious** (Amber ring), Flags artificial deadline pressure alongside non-gov destination.
+*Expected Result:* Score **5.5**, Threat Level **SUSPICIOUS**, Badge **Suspicious** (Amber meter), Flags artificial deadline pressure alongside non-gov destination.
 
-#### Test 6: Fake Challan / Utility Disconnection Threat (Score: 7.0 / 10)
+#### Test 6: Fake Challan / Utility Disconnection Threat (Score: 7.0 / 10 | CRITICAL)
 ```text
 Electricity power supply disconnected tonight pay penalty within 2 hours at https://bill-pay-online.net
 ```
-*Expected Result:* Score **7.0**, Badge **High risk** (Red ring), Flags high-pressure power cutoff cue, artificial deadline, and penalty demand.
+*Expected Result:* Score **7.0**, Threat Level **CRITICAL**, Badge **High risk** (Red meter), Flags high-pressure power cutoff cue, artificial deadline, and penalty demand.
 
-#### Test 7: PhishTank Malicious TLD URL (Score: 8.0 / 10)
+#### Test 7: PhishTank Database Interception (Score: 9.8 / 10 | CRITICAL)
 ```text
 https://phishtank.icu/login
 ```
-*Expected Result:* Score **8.0**, Badge **High risk** (Red ring), Flags critical indicator for disposable `.icu` phishing infrastructure.
+*Expected Result:* Score **9.8**, Threat Level **CRITICAL**, Badge **High risk** (Red meter), Intercepted directly by PhishTank Threat Database as Priority 1 threat.
 
-#### Test 8: Raw IP Address Hostname (Score: 8.0 / 10)
+#### Test 8: Raw IP Address Hostname (Score: 8.0 / 10 | CRITICAL)
 ```text
 http://192.168.1.1/verify
 ```
-*Expected Result:* Score **8.0**, Badge **High risk** (Red ring), Flags critical indicator for direct numeric IP address bypassing DNS reputation.
+*Expected Result:* Score **8.0**, Threat Level **CRITICAL**, Badge **High risk** (Red meter), Flags critical indicator for direct numeric IP address bypassing DNS reputation.
 
-#### Test 9: Law Enforcement Impersonation & Arrest Threat (Score: 9.0 / 10)
+#### Test 9: Law Enforcement Impersonation & Arrest Threat (Score: 9.0 / 10 | CRITICAL)
 ```text
 CBI arrest warrant issued against your Aadhaar. Connect immediately on video call: https://cbi-investigation.top/case
 ```
-*Expected Result:* Score **9.0**, Badge **High risk** (Red ring), Detects fake CBI warrant, coercive video call demand, and malicious `.top` TLD.
+*Expected Result:* Score **9.0**, Threat Level **CRITICAL**, Badge **High risk** (Red meter), Detects fake CBI warrant, coercive video call demand, and malicious `.top` TLD.
 
-#### Test 10: Digital Arrest & UPI Extortion Trap (Score: 10.0 / 10)
+#### Test 10: Digital Arrest & UPI Extortion Trap (Score: 10.0 / 10 | CRITICAL)
 ```text
 Digital arrest order: CBI NBW issued. Transfer Rs 98,000 bail deposit to rbi-clearing@okhdfcbank or https://court-bail.icu/pay now
 ```
-*Expected Result:* Score **10.0**, Badge **High risk** (Red ring), Flags digital arrest extortion, fraudulent personal UPI VPA (`@okhdfcbank`), and disposable `.icu` link.
+*Expected Result:* Score **10.0**, Threat Level **CRITICAL**, Badge **High risk** (Red meter), Flags digital arrest extortion, fraudulent personal UPI VPA (`@okhdfcbank`), and disposable `.icu` link.
 
 ---
 

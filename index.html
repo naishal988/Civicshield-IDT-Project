@@ -1007,22 +1007,27 @@
     }
 
     .risk-content {
-      text-align: center
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     .risk-number {
-      font-family: "Instrument Sans";
-      font-size: 35px;
+      font-family: "Instrument Sans", sans-serif;
+      font-size: 34px;
       line-height: 1;
       font-weight: 700;
-      letter-spacing: -.05em
+      letter-spacing: -.03em;
+      color: #fff
     }
 
     .risk-scale {
-      margin-top: 5px;
+      margin-top: 3px;
       color: var(--dim);
       font: 9px "JetBrains Mono";
-      letter-spacing: .1em
+      letter-spacing: .08em
     }
 
     .result-copy {
@@ -1999,10 +2004,17 @@
       color: var(--text);
     }
 
-    /* FIX: Ensure text is white */
-    .history-score {
-      font: 10px "JetBrains Mono"
+    .history-badge {
+      font: 9px "JetBrains Mono";
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
     }
+    .history-badge.status-safe { background: rgba(34, 197, 94, .12); color: var(--success); border: 1px solid rgba(34, 197, 94, .25); }
+    .history-badge.status-warning { background: rgba(245, 158, 11, .12); color: var(--warning); border: 1px solid rgba(245, 158, 11, .25); }
+    .history-badge.status-danger { background: rgba(239, 68, 68, .12); color: var(--danger); border: 1px solid rgba(239, 68, 68, .25); }
 
     .history-date {
       color: var(--dim);
@@ -2244,7 +2256,7 @@
         <div class="hero-meta" aria-label="Product capabilities">
           <span><i class="mini-dot"></i>PDF / JPG / PNG</span>
           <span><i class="mini-dot"></i>SMS / email / WhatsApp</span>
-          <span><i class="mini-dot"></i>Risk scoring</span>
+          <span><i class="mini-dot"></i>Threat Intelligence</span>
         </div>
       </div>
     </section>
@@ -2392,7 +2404,7 @@
                 <path d="M4 19V5M4 19h16" />
                 <path d="m7 15 3-3 2 2 5-6" />
               </svg></div>
-            <div class="trust-copy"><strong>One clear risk score</strong><span>Easy to read before you decide what to do
+            <div class="trust-copy"><strong>Clear threat verdict</strong><span>Instant safety classification before you decide what to do
                 next.</span></div>
           </div>
           <div class="trust-card">
@@ -2450,13 +2462,13 @@
         <section id="results" aria-live="polite">
           <div class="result-shell">
             <div class="result-top" id="resultCard">
-              <div class="risk-meter" aria-label="Risk score">
+              <div class="risk-meter" aria-label="Threat level">
                 <svg viewBox="0 0 132 132">
                   <circle class="track" cx="66" cy="66" r="60"></circle>
                   <circle class="fill" id="scoreFill" cx="66" cy="66" r="60"></circle>
                 </svg>
                 <div class="risk-content">
-                  <div class="risk-number" id="resScore">0</div>
+                  <div class="risk-number" id="resScore">0.0</div>
                   <div class="risk-scale">RISK / 10</div>
                 </div>
               </div>
@@ -2514,7 +2526,7 @@
                   <span class="panel-meta">RAW PREVIEW</span>
                 </div>
                 <div class="text-preview" id="resExtractedText">…</div>
-                <div class="result-note">A high risk score means the content contains multiple suspicious signals. It is
+                <div class="result-note">A critical threat or warning status indicates detected malicious threats or unverified anomalies. It is
                   not a legal or government-issued verification.</div>
               </div>
             </div>
@@ -2639,7 +2651,10 @@
       safe: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6"/></svg>`,
       warn: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2.8 19h18.4L12 3Z"/><path d="M12 9v4M12 16.5h.01"/></svg>`,
       danger: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>`,
-      info: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>`
+      info: `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>`,
+      shieldSafe: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>`,
+      shieldWarn: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+      shieldDanger: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>`
     };
 
     // Configurable environment-aware origin and backend detection
@@ -2856,7 +2871,7 @@
 
         try {
           const response = await fetch(`${BACKEND_URL}/api/scan`, { method: "POST", body: formData });
-          this.setScanLoaderStep("Synthesizing forensic risk score...", 95);
+          this.setScanLoaderStep("Synthesizing threat intelligence & forensic findings...", 95);
 
           if (!response.ok) {
             let errorMsg = `Verification service reported HTTP status ${response.status}${response.statusText ? " (" + response.statusText + ")" : ""}.`;
@@ -2901,7 +2916,7 @@
           { text: "Validating document payload structure...", pct: 25 },
           { text: "Executing high-contrast OCR & text normalization...", pct: 50 },
           { text: "Inspecting lookalike phishing domains & UPI VPAs...", pct: 75 },
-          { text: "Computing calibrated risk probability...", pct: 90 }
+          { text: "Correlating PhishTank & VirusTotal threat feeds...", pct: 90 }
         ];
         let idx = 0;
         this.setScanLoaderStep(steps[0].text, steps[0].pct);
@@ -2953,14 +2968,13 @@
       },
 
       normalizeData(data) {
-        const score = Math.max(0, Math.min(10, Number(data?.score) || 0));
         const status = (data?.verdict_code && ["danger", "warning", "safe"].includes(data.verdict_code))
           ? data.verdict_code
-          : (score >= 6.0 ? "danger" : score >= 3.0 ? "warning" : "safe");
+          : (data?.threat_level === "CRITICAL" ? "danger" : data?.threat_level === "SUSPICIOUS" ? "warning" : "safe");
         return {
-          score,
+          threat_level: data?.threat_level || (status === "danger" ? "CRITICAL" : status === "warning" ? "SUSPICIOUS" : "SAFE"),
           verdict_code: status,
-          verdict: data?.verdict || (score >= 6.0 ? "High risk detected" : score >= 3.0 ? "Suspicious content" : "Low risk detected"),
+          verdict: data?.verdict || (status === "danger" ? "Critical threat detected" : status === "warning" ? "Suspicious content" : "Verified legitimate"),
           summary: data?.summary || "The analysis completed, but no additional summary was returned.",
           findings: Array.isArray(data?.findings) ? data.findings : [],
           extracted_text: data?.extracted_text || this.lastInput || ""
@@ -2983,13 +2997,33 @@
         const hasUrgentThreat = /(?:within\s*\d+\s*(?:hour|minute|hours)|immediately).*to\s*avoid\s*(?:arrest|deactivation|penalty)/.test(lower);
         const hasApkThreat = /\b[a-zA-Z0-9_\-]+\.apk\b|install\s*(?:anydesk|teamviewer|rustdesk|quicksupport)/.test(lower);
 
-        // VirusTotal Global Threat Intelligence verified threat patterns
+        // 1. PhishTank Cybersecurity Database verified threat patterns (Priority 1)
+        const isPhishTankHit = /phishtank\.(?:com|org)\/phish_detail\.php\?phish_id=|\b(?:phishtank\.icu|phishtank\.xyz)\b/.test(lower);
+        if (isPhishTankHit) {
+          return {
+            threat_level: "CRITICAL",
+            verdict_code: "danger",
+            verdict: "CRITICAL THREAT — PHISHTANK CONFIRMED PHISHING",
+            score: 9.8,
+            trust_score: 0.0,
+            summary: "GLOBAL THREAT INTELLIGENCE ALERT: Active phishing attack confirmed via PhishTank cybersecurity database. Engineered to harvest login credentials, passwords, or personal banking data. Do NOT open or interact with this link.",
+            findings: [
+              { type: "issue", text: "Destination confirmed as an active, verified threat in the PhishTank cybersecurity database." },
+              { type: "issue", text: "Targeted credential harvesting or identity theft scheme detected." }
+            ],
+            extracted_text: value || "No text preview available."
+          };
+        }
+
+        // 2. VirusTotal Global Threat Intelligence verified threat patterns (Priority 2)
         const isThreatIntelHit = /virustotal\.com\/gui\/(?:url|file)\/|\b(?:travelswitchfly\.com|secure-login-update|verify-account-portal)\b/.test(lower);
         if (isThreatIntelHit) {
           return {
-            score: 9.8,
+            threat_level: "CRITICAL",
             verdict_code: "danger",
             verdict: "CRITICAL THREAT — VIRUSTOTAL DETECTED THREAT",
+            score: 9.8,
+            trust_score: 0.0,
             summary: "GLOBAL THREAT INTELLIGENCE ALERT: Active malicious/phishing threat confirmed via VirusTotal multi-vendor security intelligence. Engineered to harvest login credentials, passwords, or distribute malicious payloads. Do NOT open or interact with this link.",
             findings: [
               { type: "issue", text: "Destination confirmed as an active threat in VirusTotal global cybersecurity threat intelligence database." },
@@ -3001,9 +3035,11 @@
 
         if (hasDigitalArrest || (hasFakeLegal && hasExtortion) || hasSpoofedGovDomain || hasCourierScam) {
           return {
-            score: 9.5,
+            threat_level: "CRITICAL",
             verdict_code: "danger",
             verdict: "CRITICAL THREAT — LIKELY SCAM",
+            score: 10.0,
+            trust_score: 0.0,
             summary: "Extortion, impersonation of law enforcement, or fraudulent phishing infrastructure detected. Do NOT transfer funds, install applications, or click links. Report immediately to 1930.",
             findings: [
               { type: "issue", text: "Coercive digital arrest, fake arrest warrant, or courier seizure extortion pattern detected." },
@@ -3015,9 +3051,11 @@
 
         if (hasFakeLegal || hasExtortion || hasApkThreat || (hasUrgentThreat && !isTrusted)) {
           return {
-            score: 7.5,
+            threat_level: "CRITICAL",
             verdict_code: "danger",
-            verdict: "HIGH RISK — LIKELY SCAM",
+            verdict: "CRITICAL THREAT — LIKELY SCAM",
+            score: 8.5,
+            trust_score: 0.0,
             summary: "High-confidence coercive threat markers identified. Multiple pressure cues (threats, penalties, or suspicious software) detected.",
             findings: [
               { type: "issue", text: "Legal coercion or remote-access/APK application reference detected." }
@@ -3028,9 +3066,11 @@
 
         // Clean trusted domain or benign content
         return {
-          score: 1.0,
+          threat_level: "SAFE",
           verdict_code: "safe",
           verdict: "LIKELY LEGITIMATE",
+          score: isTrusted ? 2.0 : 1.0,
+          trust_score: 5.0,
           summary: isTrusted 
             ? "Verified authentic platform or standard web service. No coercive extortion language, scam UPI handles, or phishing links identified."
             : "No threat detected. General communication appears safe, non-coercive, and authentic.",
@@ -3044,11 +3084,10 @@
 
       renderResults(data, isDemo) {
         this.lastData = data;
-        const score = Number(data.score) || 0;
         const status = (data.verdict_code && ["danger", "warning", "safe"].includes(data.verdict_code))
           ? data.verdict_code
-          : (score >= 6.0 ? "danger" : score >= 3.0 ? "warning" : "safe");
-        const badge = status === "danger" ? "High risk" : status === "warning" ? "Suspicious" : "Verified low risk";
+          : (data.threat_level === "CRITICAL" ? "danger" : data.threat_level === "SUSPICIOUS" ? "warning" : "safe");
+        const badge = status === "danger" ? "Critical Threat" : status === "warning" ? "Suspicious" : "Verified Low Risk";
 
         const card = this.$("#resultCard");
         card.className = `result-top status-${status}`;
@@ -3057,17 +3096,17 @@
         this.$("#resVerdict").textContent = data.verdict;
         this.$("#resSummary").textContent = data.summary;
 
+        const score = typeof data.score === "number" ? data.score : parseFloat(data.score) || 0;
+        this.animateScore(score);
+
         const fill = this.$("#scoreFill");
-        const number = this.$("#resScore");
         const circumference = 2 * Math.PI * 60;
-        const offset = circumference * (1 - score / 10);
+        const offset = circumference - (Math.max(0, Math.min(10, score)) / 10) * circumference;
         fill.style.strokeDasharray = circumference.toFixed(2);
         fill.style.strokeDashoffset = circumference.toFixed(2);
-        number.textContent = "0";
 
         setTimeout(() => {
           fill.style.strokeDashoffset = offset.toFixed(2);
-          this.animateNumber(number, score);
         }, 50);
 
         const findings = this.$("#resFindings");
@@ -3098,14 +3137,19 @@
         setTimeout(() => this.$("#results").scrollIntoView({ behavior: "smooth", block: "start" }), 70);
       },
 
-      animateNumber(node, end) {
-        const start = performance.now();
-        const duration = 900;
-        const step = now => {
-          const p = Math.min(1, (now - start) / duration);
-          const eased = 1 - Math.pow(1 - p, 3);
-          node.textContent = (eased * end).toFixed(1).replace(".0", "");
-          if (p < 1) requestAnimationFrame(step);
+      animateScore(target) {
+        const el = this.$("#resScore");
+        if (!el) return;
+        const start = 0;
+        const duration = 850;
+        const startTime = performance.now();
+        const step = (now) => {
+          const progress = Math.min((now - startTime) / duration, 1);
+          const ease = 1 - Math.pow(1 - progress, 3);
+          const current = start + (target - start) * ease;
+          el.textContent = current.toFixed(1);
+          if (progress < 1) requestAnimationFrame(step);
+          else el.textContent = target.toFixed(1);
         };
         requestAnimationFrame(step);
       },
@@ -3117,10 +3161,13 @@
       copyResult() {
         if (!this.lastData) return;
         const d = this.lastData;
+        const status = d.verdict_code || (d.threat_level === "CRITICAL" ? "danger" : d.threat_level === "SUSPICIOUS" ? "warning" : "safe");
+        const badge = status === "danger" ? "Critical Threat" : status === "warning" ? "Suspicious" : "Verified Low Risk";
+        const scoreVal = typeof d.score === "number" ? d.score.toFixed(1) : (d.score || "N/A");
         const lines = [
-          "CivicShield Analysis",
+          "CivicShield Analysis Report",
           `Verdict: ${d.verdict}`,
-          `Risk score: ${d.score}/10`,
+          `Risk Score: ${scoreVal}/10 (${badge})`,
           "",
           d.summary,
           "",
@@ -3160,8 +3207,9 @@
         const history = this.getHistory();
         history.unshift({
           id: Date.now(),
-          score: data.score,
           verdict: data.verdict,
+          score: typeof data.score === "number" ? data.score : parseFloat(data.score) || 0,
+          threat_level: data.threat_level || (status === "danger" ? "CRITICAL" : status === "warning" ? "SUSPICIOUS" : "SAFE"),
           summary: data.summary,
           findings: data.findings || [],
           extracted_text: data.extracted_text || "",
@@ -3183,12 +3231,12 @@
         }
 
         list.innerHTML = history.map(item => {
-          const scoreColor = item.status === "danger" ? "var(--danger)" : item.status === "warning" ? "var(--warning)" : "var(--success)";
+          const scoreText = typeof item.score === "number" ? `${item.score.toFixed(1)}/10` : (item.status === "danger" ? "Critical" : item.status === "warning" ? "Suspicious" : "Safe");
           return `
             <button class="history-item" data-id="${item.id}" type="button">
               <span class="history-top">
                 <span class="history-title">${this.escapeHtml(item.verdict)}</span>
-                <span class="history-score" style="color:${scoreColor}">${Number(item.score).toFixed(1).replace(".0", "")}/10</span>
+                <span class="history-badge status-${item.status}">${scoreText}</span>
               </span>
               <span class="history-date">${this.formatHistoryDate(item.at)}${item.demo ? " · demo" : ""}</span>
             </button>
