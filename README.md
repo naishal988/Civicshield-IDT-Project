@@ -28,7 +28,7 @@
 8. [Docker & Container Deployment](#8-docker--container-deployment)
 9. [Cloud Deployment Guide (Render / Vercel / Railway)](#9-cloud-deployment-guide-render--vercel--railway)
 10. [Threat Classification & Demonstration Test Cases (Safe vs. Malicious)](#10-threat-classification--demonstration-test-cases-safe-vs-malicious)
-11. Academic IDT Team Contributions
+11. [Academic IDT Team Contributions](#11-academic-idt-team-contributions)
 ---
 
 ## 1. Executive Summary & Problem Statement
